@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * DTO pour les Decks
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,7 +27,7 @@ public class DeckDto {
     private Long userId;
 
     @Schema(description = "Deck public ou privé", example = "false", defaultValue = "false")
-    private boolean isPublic;
+    private Boolean isPublic;
 
     @Schema(description = "Date de création", example = "2024-12-21T19:00:00", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
