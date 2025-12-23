@@ -2,27 +2,53 @@ package be.ipam.flashcards.mappers;
 
 import be.ipam.flashcards.dto.FlashcardDto;
 import be.ipam.flashcards.models.Flashcard;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * MAPPER FLASHCARD - Convertit entre Flashcard et FlashcardDto
+ * MAPPER FLASHCARD - Conversion manuelle (sans MapStruct)
  */
-@Mapper(componentModel = "spring")
-public interface FlashcardMapper {
+@Component
+public class FlashcardMapper {
 
     // Convertit Flashcard → FlashcardDto
-    @Mapping(source = "deck.id", target = "deckId")
-    FlashcardDto toDto(Flashcard flashcard);
+    public FlashcardDto toDto(Flashcard flashcard) {
+        if (flashcard == null) {
+            return null;
+        }
+
+        FlashcardDto dto = new FlashcardDto();
+        dto.setId(flashcard.getId());
+        dto.setQuestion(flashcard.getQuestion());
+        dto.setAnswer(flashcard.getAnswer());
+        dto.setDeckId(flashcard.getDeck() != null ? flashcard.getDeck().getId() : null);
+        dto.setCreatedAt(flashcard.getCreatedAt());
+
+        return dto;
+    }
 
     // Convertit liste de Flashcards → liste de FlashcardDtos
-    List<FlashcardDto> toDtoList(List<Flashcard> flashcards);
+    public List<FlashcardDto> toDtoList(List<Flashcard> flashcards) {
+        if (flashcards == null) {
+            return null;
+        }
+        return flashcards.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
 
     // Convertit FlashcardDto → Flashcard
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "deck", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    Flashcard toEntity(FlashcardDto flashcardDto);
+    public Flashcard toEntity(FlashcardDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        Flashcard flashcard = new Flashcard();
+        flashcard.setQuestion(dto.getQuestion());
+        flashcard.setAnswer(dto.getAnswer());
+
+        return flashcard;
+    }
 }
