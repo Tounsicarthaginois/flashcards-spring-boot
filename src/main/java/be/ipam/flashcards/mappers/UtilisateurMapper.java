@@ -2,51 +2,41 @@ package be.ipam.flashcards.mappers;
 
 import be.ipam.flashcards.dto.UtilisateurDto;
 import be.ipam.flashcards.models.Utilisateur;
+import org.springframework.stereotype.Component;
 
 /**
- * Classe utilitaire pour convertir entre Entité Utilisateur et DTO UtilisateurDto
+ * MAPPER UTILISATEUR - Conversion manuelle
  */
+@Component
 public class UtilisateurMapper {
 
-    // Empêcher l'instanciation
-    private UtilisateurMapper() {
-    }
-
-    /**
-     * Convertit une entité Utilisateur en DTO
-     * @param utilisateur l'entité à convertir
-     * @return le DTO correspondant, ou null si l'entité est null
-     */
-    public static UtilisateurDto toDto(Utilisateur utilisateur) {
+    // Convertit Utilisateur → UtilisateurDto (SANS le mot de passe)
+    public UtilisateurDto toDto(Utilisateur utilisateur) {
         if (utilisateur == null) {
             return null;
         }
 
-        return new UtilisateurDto(
-                utilisateur.getId(),
-                utilisateur.getEmail(),
-                utilisateur.getDisplayName(),
-                utilisateur.getRole()
-        );
+        UtilisateurDto dto = new UtilisateurDto();
+        dto.setId(utilisateur.getId());
+        dto.setEmail(utilisateur.getEmail());
+        dto.setNom(utilisateur.getNom());
+        dto.setPrenom(utilisateur.getPrenom());
+        // Pas de mot de passe dans le DTO !
+
+        return dto;
     }
 
-    /**
-     * Convertit un DTO en entité Utilisateur
-     * Note : le passwordHash n'est pas géré ici pour des raisons de sécurité
-     * @param dto le DTO à convertir
-     * @return l'entité correspondante, ou null si le DTO est null
-     */
-    public static Utilisateur toEntity(UtilisateurDto dto) {
+    // Convertit UtilisateurDto → Utilisateur (pour création/mise à jour)
+    public Utilisateur toEntity(UtilisateurDto dto) {
         if (dto == null) {
             return null;
         }
 
         Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setId(dto.getId());
         utilisateur.setEmail(dto.getEmail());
-        utilisateur.setDisplayName(dto.getDisplayName());
-        utilisateur.setRole(dto.getRole());
-        // passwordHash doit être géré séparément lors de la création/modification
+        utilisateur.setNom(dto.getNom());
+        utilisateur.setPrenom(dto.getPrenom());
+        // Le mot de passe sera géré séparément par le service
 
         return utilisateur;
     }

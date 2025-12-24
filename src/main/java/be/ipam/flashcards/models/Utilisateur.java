@@ -1,87 +1,59 @@
 package be.ipam.flashcards.models;
 
+import be.ipam.flashcards.enums.Role;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ENTITÉ UTILISATEUR - Représente un utilisateur de l'application
+ */
 @Entity
-@Table(name = "utilisateur")
+@Table(name = "utilisateurs")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Utilisateur {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 255)
-    private String passwordHash;
+    @Column(nullable = false)
+    private String nom;
 
-    @Column(nullable = false, length = 100)
-    private String displayName;
+    @Column(nullable = false)
+    private String prenom;
 
-    @Column(nullable = false, length = 20)
-    private String role; // "UTILISATEUR" ou "ADMIN"
+    @Column(nullable = false)
+    private String password;
 
-    // Constructeur vide obligatoire pour JPA
-    public Utilisateur() {
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
 
-    // Constructeur complet
-    public Utilisateur(String email, String passwordHash, String displayName, String role) {
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.displayName = displayName;
-        this.role = role;
-    }
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    // Getters et Setters
-    public Long getId() {
-        return id;
-    }
+    // Relation : Un utilisateur peut créer plusieurs decks
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Deck> decks = new ArrayList<>();
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    @Override
-    public String toString() {
-        return "Utilisateur{" +
-                "id=" + id +
-                ", email='" + email + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", role='" + role + '\'' +
-                '}';
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        if (this.role == null) {
+            this.role = Role.USER;
+        }
     }
 }
