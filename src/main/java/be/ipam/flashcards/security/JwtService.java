@@ -71,6 +71,11 @@ public class JwtService {
 
     // Extrait toutes les claims du token
     private Claims extractAllClaims(String token) {
+        // LOG pour déboguer
+        System.out.println("TOKEN REÇU: [" + token + "]");
+        System.out.println("LONGUEUR: " + token.length());
+        System.out.println("CONTIENT ESPACES: " + token.contains(" "));
+
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()

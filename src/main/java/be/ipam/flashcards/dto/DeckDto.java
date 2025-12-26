@@ -1,12 +1,12 @@
 package be.ipam.flashcards.dto;
 
+import be.ipam.flashcards.enums.TypeListe;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -17,24 +17,30 @@ public class DeckDto {
     @Schema(description = "ID du deck", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
-    @Schema(description = "Nom du deck", example = "Vocabulaire Anglais", required = true)
+    @Schema(description = "Nom du deck", example = "Vocabulaire TOEFL", required = true)
     private String name;
 
-    @Schema(description = "Description du deck", example = "Mots pour le TOEFL", nullable = true)
+    @Schema(description = "Description", example = "Mots essentiels pour le TOEFL")
     private String description;
 
-    @Schema(description = "ID de l'utilisateur propriétaire", example = "5", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Type de liste", example = "PRIVEE", required = true)
+    private TypeListe type;
+
+    @Schema(description = "ID de la langue étudiée", example = "1", required = true)
+    private Long langueId;
+
+    @Schema(description = "Nom de la langue étudiée", example = "Anglais", accessMode = Schema.AccessMode.READ_ONLY)
+    private String langueNom;
+
+    @Schema(description = "ID du créateur", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long userId;
 
-    @Schema(description = "Deck public ou privé", example = "false", defaultValue = "false")
-    private Boolean isPublic;
+    @Schema(description = "ID du validateur (si liste publique)", example = "2")
+    private Long validateurId;
 
-    @Schema(description = "Date de création", example = "2024-12-21T19:00:00", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Date de création", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @Schema(description = "Nombre de flashcards", example = "15", accessMode = Schema.AccessMode.READ_ONLY)
-    private int flashcardCount;
-
-    @Schema(description = "Liste des flashcards (optionnel)", nullable = true)
-    private List<FlashcardDto> flashcards;
+    @Schema(description = "Nombre de flashcards", accessMode = Schema.AccessMode.READ_ONLY)
+    private Integer flashcardCount;
 }

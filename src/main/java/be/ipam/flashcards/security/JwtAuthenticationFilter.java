@@ -48,23 +48,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // Extrait le token (enlève "Bearer ")
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractEmail(jwt);
+        jwt = authHeader.substring(7).trim();
 
-        // Si l'email est extrait et que l'utilisateur n'est pas déjà authentifié
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+        try {
+            userEmail = jwtService.extractEmail(jwt);
 
-            // Vérifie si le token est valide
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            // Si l'email est extrait et que l'utilisateur n'est pas déjà authentifié
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+                // Vérifie si le token est valide
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (Exception e) {
+            System.err.println("Erreur JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

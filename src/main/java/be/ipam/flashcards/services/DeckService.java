@@ -1,114 +1,134 @@
 package be.ipam.flashcards.services;
 
 import be.ipam.flashcards.dto.DeckDto;
+import be.ipam.flashcards.enums.TypeListe;
 import be.ipam.flashcards.exception.ResourceNotFoundException;
 import be.ipam.flashcards.mappers.DeckMapper;
 import be.ipam.flashcards.models.Deck;
+import be.ipam.flashcards.models.Langue;
 import be.ipam.flashcards.models.Utilisateur;
 import be.ipam.flashcards.repositories.DeckRepository;
+import be.ipam.flashcards.repositories.LangueRepository;
 import be.ipam.flashcards.repositories.UtilisateurRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * Service pour gérer les decks
+ */
 @Service
 public class DeckService {
 
     private final DeckRepository deckRepository;
+    private final LangueRepository langueRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final DeckMapper deckMapper;
 
-    public DeckService(DeckRepository deckRepository,
-                       UtilisateurRepository utilisateurRepository,
-                       DeckMapper deckMapper) {
+    public DeckService(DeckRepository deckRepository, LangueRepository langueRepository,
+                       UtilisateurRepository utilisateurRepository, DeckMapper deckMapper) {
         this.deckRepository = deckRepository;
+        this.langueRepository = langueRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.deckMapper = deckMapper;
     }
 
-    public List<DeckDto> getAllDecksByUser(Long userId) {
-        List<Deck> decks = deckRepository.findByUserId(userId);
-        return decks.stream()
-                .map(deckMapper::toDto)
-                .collect(Collectors.toList());
+    // Récupère l'utilisateur connecté
+    private Utilisateur getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", email));
     }
 
-    public DeckDto getDeckById(Long id, Long userId) {
+    // Liste tous les decks de l'utilisateur connecté
+    public List<DeckDto> getAllDecks() {
+        Utilisateur currentUser = getCurrentUser();
+        List<Deck> decks = deckRepository.findByUserId(currentUser.getId());
+        return deckMapper.toDtoList(decks);
+    }
+
+    // Récupère un deck par ID
+    public DeckDto getDeckById(Long id) {
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
-        checkDeckOwnership(deck, userId);
         return deckMapper.toDto(deck);
     }
 
+    // Crée un nouveau deck
     @Transactional
-    public DeckDto createDeck(DeckDto deckDto, Long userId) {
-        if (deckDto.getName() == null || deckDto.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Le nom du deck est obligatoire");
-        }
+    public DeckDto createDeck(DeckDto deckDto) {
+        Utilisateur currentUser = getCurrentUser();
 
-        Utilisateur user = utilisateurRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", userId));
+        // Récupère la langue
+        Langue langue = langueRepository.findById(deckDto.getLangueId())
+                .orElseThrow(() -> new ResourceNotFoundException("Langue", "id", deckDto.getLangueId()));
 
-        if (deckRepository.existsByNameAndUserId(deckDto.getName(), userId)) {
-            throw new IllegalArgumentException("Vous avez déjà un deck avec le nom : " + deckDto.getName());
-        }
-
+        // Crée le deck
         Deck deck = deckMapper.toEntity(deckDto);
-        deck.setUser(user);
+        deck.setLangue(langue);
+        deck.setUser(currentUser);
+
+        // Si le type est null, par défaut PRIVEE
+        if (deck.getType() == null) {
+            deck.setType(TypeListe.PRIVEE);
+        }
 
         Deck savedDeck = deckRepository.save(deck);
         return deckMapper.toDto(savedDeck);
     }
 
+    // Met à jour un deck
     @Transactional
-    public DeckDto updateDeck(Long id, DeckDto deckDto, Long userId) {
+    public DeckDto updateDeck(Long id, DeckDto deckDto) {
+        Utilisateur currentUser = getCurrentUser();
+
         Deck existingDeck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
 
-        checkDeckOwnership(existingDeck, userId);
-
-        if (deckDto.getName() == null || deckDto.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Le nom du deck est obligatoire");
+        // Vérifie que l'utilisateur est le propriétaire
+        if (!existingDeck.getUser().getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException("Vous n'êtes pas autorisé à modifier ce deck");
         }
 
-        if (!existingDeck.getName().equals(deckDto.getName()) &&
-                deckRepository.existsByNameAndUserId(deckDto.getName(), userId)) {
-            throw new IllegalArgumentException("Vous avez déjà un deck avec le nom : " + deckDto.getName());
-        }
-
+        // Met à jour les champs
         existingDeck.setName(deckDto.getName());
         existingDeck.setDescription(deckDto.getDescription());
-        existingDeck.setIsPublic(deckDto.getIsPublic());  // ← LIGNE CRITIQUE
+
+        // Met à jour la langue si changée
+        if (deckDto.getLangueId() != null && !deckDto.getLangueId().equals(existingDeck.getLangue().getId())) {
+            Langue langue = langueRepository.findById(deckDto.getLangueId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Langue", "id", deckDto.getLangueId()));
+            existingDeck.setLangue(langue);
+        }
 
         Deck updatedDeck = deckRepository.save(existingDeck);
         return deckMapper.toDto(updatedDeck);
     }
 
+    // Supprime un deck
     @Transactional
-    public void deleteDeck(Long id, Long userId) {
+    public void deleteDeck(Long id) {
+        Utilisateur currentUser = getCurrentUser();
+
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
 
-        checkDeckOwnership(deck, userId);
-        deckRepository.deleteById(id);
-    }
-
-    public List<DeckDto> searchDecksByName(String name, Long userId) {
-        List<Deck> decks = deckRepository.findByNameContainingIgnoreCase(name);
-        return decks.stream()
-                .map(deckMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public long countDecksByUser(Long userId) {
-        return deckRepository.countByUserId(userId);
-    }
-
-    private void checkDeckOwnership(Deck deck, Long userId) {
-        if (!deck.getUser().getId().equals(userId)) {
-            throw new ResourceNotFoundException("Deck", "id", deck.getId());
+        // Vérifie que l'utilisateur est le propriétaire
+        if (!deck.getUser().getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException("Vous n'êtes pas autorisé à supprimer ce deck");
         }
+
+        deckRepository.delete(deck);
+    }
+
+    // Recherche des decks par nom
+    public List<DeckDto> searchDecksByName(String name) {
+        Utilisateur currentUser = getCurrentUser();
+        List<Deck> decks = deckRepository.findByUserIdAndNameContaining(currentUser.getId(), name);
+        return deckMapper.toDtoList(decks);
     }
 }

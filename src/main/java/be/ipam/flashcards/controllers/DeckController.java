@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * CONTROLLER DECK - API REST pour les Decks
+ * Controller pour les Decks
  */
 @RestController
 @RequestMapping("/api/decks")
@@ -29,87 +29,68 @@ public class DeckController {
         this.deckService = deckService;
     }
 
-    // GET /api/decks - Liste tous les decks
     @Operation(summary = "Liste tous les decks de l'utilisateur")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès",
-                    content = @Content(schema = @Schema(implementation = DeckDto.class))),
-            @ApiResponse(responseCode = "500", description = "Erreur serveur",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
     })
     @GetMapping
     public ResponseEntity<List<DeckDto>> getAllDecks() {
-        Long userId = 1L;  // TODO: Récupérer depuis l'authentification
-        List<DeckDto> decks = deckService.getAllDecksByUser(userId);
+        List<DeckDto> decks = deckService.getAllDecks();
         return ResponseEntity.ok(decks);
     }
 
-    // GET /api/decks/{id} - Détails d'un deck
     @Operation(summary = "Récupère un deck par son ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Deck trouvé",
-                    content = @Content(schema = @Schema(implementation = DeckDto.class))),
+            @ApiResponse(responseCode = "200", description = "Deck trouvé"),
             @ApiResponse(responseCode = "404", description = "Deck non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<DeckDto> getDeckById(@PathVariable("id") Long id) {
-        Long userId = 1L;  // TODO: Récupérer depuis l'authentification
-        DeckDto deck = deckService.getDeckById(id, userId);
+    public ResponseEntity<DeckDto> getDeckById(@PathVariable Long id) {
+        DeckDto deck = deckService.getDeckById(id);
         return ResponseEntity.ok(deck);
     }
 
-    // POST /api/decks - Crée un deck
     @Operation(summary = "Crée un nouveau deck")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Deck créé avec succès",
-                    content = @Content(schema = @Schema(implementation = DeckDto.class))),
+            @ApiResponse(responseCode = "201", description = "Deck créé avec succès"),
             @ApiResponse(responseCode = "400", description = "Données invalides",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<DeckDto> createDeck(@RequestBody DeckDto deckDto) {
-        Long userId = 1L;  // TODO: Récupérer depuis l'authentification
-        DeckDto createdDeck = deckService.createDeck(deckDto, userId);
+        DeckDto createdDeck = deckService.createDeck(deckDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDeck);
     }
 
-    // PUT /api/decks/{id} - Modifie un deck
     @Operation(summary = "Met à jour un deck existant")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Deck modifié avec succès",
-                    content = @Content(schema = @Schema(implementation = DeckDto.class))),
+            @ApiResponse(responseCode = "200", description = "Deck mis à jour"),
             @ApiResponse(responseCode = "404", description = "Deck non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
-    public ResponseEntity<DeckDto> updateDeck(@PathVariable("id") Long id,
-                                              @RequestBody DeckDto deckDto) {
-        Long userId = 1L;  // TODO: Récupérer depuis l'authentification
-        DeckDto updatedDeck = deckService.updateDeck(id, deckDto, userId);
+    public ResponseEntity<DeckDto> updateDeck(@PathVariable Long id, @RequestBody DeckDto deckDto) {
+        DeckDto updatedDeck = deckService.updateDeck(id, deckDto);
         return ResponseEntity.ok(updatedDeck);
     }
 
-    // DELETE /api/decks/{id} - Supprime un deck
     @Operation(summary = "Supprime un deck")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Deck supprimé avec succès"),
+            @ApiResponse(responseCode = "204", description = "Deck supprimé"),
             @ApiResponse(responseCode = "404", description = "Deck non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDeck(@PathVariable("id") Long id) {
-        Long userId = 1L;  // TODO: Récupérer depuis l'authentification
-        deckService.deleteDeck(id, userId);
+    public ResponseEntity<Void> deleteDeck(@PathVariable Long id) {
+        deckService.deleteDeck(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET /api/decks/search?name=XXX - Recherche par nom
     @Operation(summary = "Recherche des decks par nom")
     @GetMapping("/search")
-    public ResponseEntity<List<DeckDto>> searchDecks(@RequestParam("name") String name) {
-        Long userId = 1L;  // TODO: Récupérer depuis l'authentification
-        List<DeckDto> decks = deckService.searchDecksByName(name, userId);
+    public ResponseEntity<List<DeckDto>> searchDecks(@RequestParam String name) {
+        List<DeckDto> decks = deckService.searchDecksByName(name);
         return ResponseEntity.ok(decks);
     }
 }
