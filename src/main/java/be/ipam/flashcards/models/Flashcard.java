@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * ENTITÉ FLASHCARD - Représente une carte de révision
- * Une flashcard = Question + Réponse
+ * ENTITÉ FLASHCARD - Représente une carte d'apprentissage
  */
 @Entity
 @Table(name = "flashcards")
@@ -24,19 +25,21 @@ public class Flashcard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Mot ou phrase dans la langue étudiée
     @Column(nullable = false, columnDefinition = "TEXT")
     private String question;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String answer;
-
-    @Column(name = "created_at", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-
-    // RELATION : Une flashcard appartient à UN deck
+    // Deck auquel appartient cette flashcard
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deck_id", nullable = false)
     private Deck deck;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // Traductions de cette flashcard (peut avoir plusieurs traductions)
+    @OneToMany(mappedBy = "flashcard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Traduction> traductions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

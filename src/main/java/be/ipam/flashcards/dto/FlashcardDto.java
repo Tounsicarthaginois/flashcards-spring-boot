@@ -6,10 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * DTO pour les Flashcards
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,15 +18,15 @@ public class FlashcardDto {
     @Schema(description = "ID de la flashcard", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
-    @Schema(description = "Question", example = "What is OOP?", required = true)
+    @Schema(description = "Question/mot dans la langue étudiée", example = "Hello", required = true)
     private String question;
 
-    @Schema(description = "Réponse", example = "Object-Oriented Programming", required = true)
-    private String answer;
-
-    @Schema(description = "ID du deck", example = "5")
+    @Schema(description = "ID du deck", example = "1", required = true)
     private Long deckId;
 
-    @Schema(description = "Date de création", example = "2024-12-21T19:00:00", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Date de création", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;
+
+    @Schema(description = "Liste des traductions avec exemples")
+    private List<TraductionDto> traductions = new ArrayList<>();
 }
