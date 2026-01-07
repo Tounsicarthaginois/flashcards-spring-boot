@@ -1,58 +1,69 @@
+// Le build.gradle c'est le gestionnaire de dépendances de mon projet.
+// Il liste toutes les bibliothèques nécessaires (Spring Boot, PostgreSQL, JWT...) et Gradle les télécharge automatiquement depuis Maven Central
+// Ça évite de télécharger manuellement 50 fichiers .jar et de les ajouter au classpath. Je lance juste ./gradlew bootRun et tout fonctionne.
+
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.4.12'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'  // Plugin Java pour compiler le code
+    id 'org.springframework.boot' version '3.4.12'  // Plugin Spring Boot (gère le packaging, le run...)
+    id 'io.spring.dependency-management' version '1.1.7'  // Gère les versions de dépendances Spring
 }
 
-group = 'be.ipam'
-version = '0.0.1-SNAPSHOT'
+group = 'be.ipam'  // Nom de domaine inversé (convention Java)
+version = '0.0.1-SNAPSHOT'  // Version du projet
 description = 'Projet SGBD Flashcards'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(21)  // Version Java utilisée (Java 21)
     }
 }
 
 configurations {
     compileOnly {
-        extendsFrom annotationProcessor
+        extendsFrom annotationProcessor  // Lombok utilise l'annotation processor
     }
 }
 
 repositories {
-    mavenCentral()
+    mavenCentral()  // Télécharge les bibliothèques depuis Maven Central (repo public)
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // SPRING BOOT CORE
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'  // Spring Data JPA + Hibernate
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'  // Moteur de templates (pas utilisé ici)
+    implementation 'org.springframework.boot:spring-boot-starter-web'  // Spring MVC pour API REST
 
-    // Lombok
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    // LOMBOK (génère getters/setters automatiquement)
+    compileOnly 'org.projectlombok:lombok'  // Compile seulement (pas inclus dans le .jar final)
+    annotationProcessor 'org.projectlombok:lombok'  // Traite les annotations @Data, @Getter...
 
-    // Swagger OpenAPI Documentation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+    // SWAGGER / OPENAPI (documentation API interactive)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'  // Génère swagger-ui.html
 
-    // Base de données
-    runtimeOnly 'com.mysql:mysql-connector-j'
-    runtimeOnly 'org.postgresql:postgresql'
+    // BASE DE DONNÉES (drivers)
+    runtimeOnly 'com.mysql:mysql-connector-j'  // Driver MySQL (inclus mais pas utilisé)
+    runtimeOnly 'org.postgresql:postgresql'  // Driver PostgreSQL (utilisé)
 
-    // Tests
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // TESTS
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'  // JUnit + Mockito
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'  // Lanceur de tests
 
-    // Spring Security
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // SÉCURITÉ
+    implementation 'org.springframework.boot:spring-boot-starter-security'  // Spring Security (JWT, BCrypt...)
 
     // JWT (JSON Web Token)
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'  // API JWT (interfaces)
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'  // Implémentation JWT
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'  // Parser JSON pour JWT
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform()  // Utilise JUnit 5 pour les tests
 }
+
+// COMMANDES GRADLE UTILES :
+// ./gradlew bootRun          → Lance l'application
+// ./gradlew build            → Compile et crée le .jar
+// ./gradlew clean            → Nettoie les fichiers compilés
+// ./gradlew dependencies     → Liste toutes les dépendances

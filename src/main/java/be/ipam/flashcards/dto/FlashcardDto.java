@@ -16,17 +16,22 @@ import java.util.List;
 public class FlashcardDto {
 
     @Schema(description = "ID de la flashcard", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
-    private Long id;
+    private Long id;  // Généré par la DB
 
     @Schema(description = "Question/mot dans la langue étudiée", example = "Hello", required = true)
-    private String question;
+    private String question;  // Le mot à apprendre (ex: "Apple", "Hello")
 
     @Schema(description = "ID du deck", example = "1", required = true)
-    private Long deckId;
+    private Long deckId;  // À quel deck appartient cette flashcard
 
     @Schema(description = "Date de création", accessMode = Schema.AccessMode.READ_ONLY)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt;  // Rempli automatiquement
 
     @Schema(description = "Liste des traductions avec exemples")
-    private List<TraductionDto> traductions = new ArrayList<>();
+    private List<TraductionDto> traductions = new ArrayList<>();  // Liste vide par défaut, peut contenir plusieurs traductions
 }
+
+// DTO pour créer/lire une flashcard complète
+// Structure imbriquée : FlashcardDto contient une liste de TraductionDto
+// Chaque TraductionDto contient elle-même une liste d'ExempleDto
+// Permet de créer toute la structure en une seule requête POST

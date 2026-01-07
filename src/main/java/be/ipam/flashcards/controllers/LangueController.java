@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controller pour les langues
- */
 @RestController
 @RequestMapping("/api/langues")
 @Tag(name = "Langues", description = "API de gestion des langues")
@@ -34,9 +31,9 @@ public class LangueController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
     })
-    @GetMapping
+    @GetMapping  // GET /api/langues - Accessible à tous (USER et GESTIONNAIRE)
     public ResponseEntity<List<LangueDto>> getAllLangues() {
-        List<LangueDto> langues = langueService.getAllLangues();
+        List<LangueDto> langues = langueService.getAllLangues();  // Français, Anglais, Espagnol...
         return ResponseEntity.ok(langues);
     }
 
@@ -46,16 +43,16 @@ public class LangueController {
             @ApiResponse(responseCode = "404", description = "Langue non trouvée",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/{id}")
+    @GetMapping("/{id}")  // GET /api/langues/1 - Cherche par ID
     public ResponseEntity<LangueDto> getLangueById(@PathVariable Long id) {
         LangueDto langue = langueService.getLangueById(id);
         return ResponseEntity.ok(langue);
     }
 
     @Operation(summary = "Récupère une langue par code")
-    @GetMapping("/code/{code}")
+    @GetMapping("/code/{code}")  // GET /api/langues/code/fr - Cherche par code ("fr", "en", "es"...)
     public ResponseEntity<LangueDto> getLangueByCode(@PathVariable String code) {
-        LangueDto langue = langueService.getLangueByCode(code);
+        LangueDto langue = langueService.getLangueByCode(code);  // Utile pour chercher rapidement
         return ResponseEntity.ok(langue);
     }
 
@@ -66,26 +63,29 @@ public class LangueController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "Accès refusé")
     })
-    @PreAuthorize("hasRole('GESTIONNAIRE')")
-    @PostMapping
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // PROTÉGÉ : Seuls les GESTIONNAIRE peuvent créer des langues
+    @PostMapping  // POST /api/langues - Si USER essaie → 403 Forbidden
     public ResponseEntity<LangueDto> createLangue(@RequestBody LangueDto langueDto) {
-        LangueDto createdLangue = langueService.createLangue(langueDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdLangue);
+        LangueDto createdLangue = langueService.createLangue(langueDto);  // Ajoute nouvelle langue
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdLangue);  // 201 Created
     }
 
     @Operation(summary = "Met à jour une langue (Gestionnaire uniquement)")
-    @PreAuthorize("hasRole('GESTIONNAIRE')")
-    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // PROTÉGÉ : Seuls GESTIONNAIRE
+    @PutMapping("/{id}")  // PUT /api/langues/1
     public ResponseEntity<LangueDto> updateLangue(@PathVariable Long id, @RequestBody LangueDto langueDto) {
-        LangueDto updated = langueService.updateLangue(id, langueDto);
+        LangueDto updated = langueService.updateLangue(id, langueDto);  // Modifie nom ou code
         return ResponseEntity.ok(updated);
     }
 
     @Operation(summary = "Supprime une langue (Gestionnaire uniquement)")
-    @PreAuthorize("hasRole('GESTIONNAIRE')")
-    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // PROTÉGÉ : Seuls GESTIONNAIRE
+    @DeleteMapping("/{id}")  // DELETE /api/langues/1
     public ResponseEntity<Void> deleteLangue(@PathVariable Long id) {
-        langueService.deleteLangue(id);
-        return ResponseEntity.noContent().build();
+        langueService.deleteLangue(id);  // Supprime la langue
+        return ResponseEntity.noContent().build();  // 204 No Content
     }
 }
+
+// @PreAuthorize vérifié par Spring Security AVANT d'exécuter la méthode
+// Si rôle incorrect → exception AccessDeniedException → 403 Forbidden

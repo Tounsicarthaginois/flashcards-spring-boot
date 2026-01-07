@@ -9,21 +9,27 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Repository pour les Progressions
- */
 @Repository
 public interface ProgressionUtilisateurRepository extends JpaRepository<ProgressionUtilisateur, Long> {
 
-    // Trouve la progression d'un utilisateur pour une flashcard
+    // Spring génère : SELECT * FROM progressions WHERE utilisateur_id = ? AND flashcard_id = ?
     Optional<ProgressionUtilisateur> findByUtilisateurIdAndFlashcardId(Long utilisateurId, Long flashcardId);
+    // Récupère LA progression d'un user pour UNE flashcard spécifique
 
-    // Trouve toutes les progressions d'un utilisateur
+    // Spring génère : SELECT * FROM progressions WHERE utilisateur_id = ?
     List<ProgressionUtilisateur> findByUtilisateurId(Long utilisateurId);
+    // Toutes les progressions d'un utilisateur
 
-    // Trouve les flashcards à réviser aujourd'hui
+    // Spring génère : SELECT * FROM progressions WHERE utilisateur_id = ? AND prochaine_revision < ?
     List<ProgressionUtilisateur> findByUtilisateurIdAndProchaineRevisionBefore(Long utilisateurId, LocalDateTime date);
+    // IMPORTANT : Flashcards à réviser AUJOURD'HUI (date < maintenant)
+    // "Before" = < en SQL (pas <=)
 
-    // Trouve les flashcards par état
+    // Spring génère : SELECT * FROM progressions WHERE utilisateur_id = ? AND etat = ?
     List<ProgressionUtilisateur> findByUtilisateurIdAndEtat(Long utilisateurId, EtatProgression etat);
+    // Filtre par état (NOUVEAU, EN_COURS, CONNU)
 }
+
+// Repository central du système SRS
+// findByUtilisateurIdAndProchaineRevisionBefore est la méthode clé pour GET /api/progressions/a-reviser
+// Utilisée avec LocalDateTime.now() pour récupérer les cartes dont la date est passée

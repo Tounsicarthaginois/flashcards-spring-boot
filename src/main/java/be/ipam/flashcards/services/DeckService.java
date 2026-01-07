@@ -17,16 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Service pour gérer les decks
- */
 @Service
 public class DeckService {
 
     private final DeckRepository deckRepository;
     private final LangueRepository langueRepository;
     private final UtilisateurRepository utilisateurRepository;
-    private final DeckMapper deckMapper;
+    private final DeckMapper deckMapper;  // Pour convertir Entity ↔ DTO
 
     public DeckService(DeckRepository deckRepository, LangueRepository langueRepository,
                        UtilisateurRepository utilisateurRepository, DeckMapper deckMapper) {
@@ -36,80 +33,78 @@ public class DeckService {
         this.deckMapper = deckMapper;
     }
 
-    // Récupère l'utilisateur connecté
+    // Récupère l'utilisateur actuellement connecté (via JWT)
     private Utilisateur getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();  // Récupère du SecurityContext
+        String email = auth.getName();  // Email stocké dans le token JWT
         return utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", email));
     }
 
-    // Liste tous les decks de l'utilisateur connecté
+    // Liste tous MES decks (utilisateur connecté)
     public List<DeckDto> getAllDecks() {
         Utilisateur currentUser = getCurrentUser();
-        List<Deck> decks = deckRepository.findByUserId(currentUser.getId());
-        return deckMapper.toDtoList(decks);
+        List<Deck> decks = deckRepository.findByUserId(currentUser.getId());  // SELECT WHERE user_id = ?
+        return deckMapper.toDtoList(decks);  // Convertit List<Deck> → List<DeckDto>
     }
 
-    // Récupère un deck par ID
+    // Récupère UN deck par son ID
     public DeckDto getDeckById(Long id) {
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
-        return deckMapper.toDto(deck);
+        return deckMapper.toDto(deck);  // Convertit Deck → DeckDto
     }
 
-    // Crée un nouveau deck
-    @Transactional
+    @Transactional  // Transaction DB
     public DeckDto createDeck(DeckDto deckDto) {
-        Utilisateur currentUser = getCurrentUser();
+        Utilisateur currentUser = getCurrentUser();  // Récupère l'user connecté
 
-        // Récupère la langue
+        // Vérifie que la langue existe
         Langue langue = langueRepository.findById(deckDto.getLangueId())
                 .orElseThrow(() -> new ResourceNotFoundException("Langue", "id", deckDto.getLangueId()));
 
-        // Crée le deck
+        // Convertit DTO → Entity
         Deck deck = deckMapper.toEntity(deckDto);
-        deck.setLangue(langue);
-        deck.setUser(currentUser);
+        deck.setLangue(langue);  // Définit la relation @ManyToOne
+        deck.setUser(currentUser);  // Définit le créateur (user connecté)
 
-        // Si le type est null, par défaut PRIVEE
+        // Type par défaut : PRIVEE
         if (deck.getType() == null) {
             deck.setType(TypeListe.PRIVEE);
         }
 
-        Deck savedDeck = deckRepository.save(deck);
-        return deckMapper.toDto(savedDeck);
+        Deck savedDeck = deckRepository.save(deck);  // INSERT INTO decks
+        return deckMapper.toDto(savedDeck);  // Renvoie le DTO
     }
 
-    // Met à jour un deck
     @Transactional
     public DeckDto updateDeck(Long id, DeckDto deckDto) {
         Utilisateur currentUser = getCurrentUser();
 
+        // Récupère le deck existant
         Deck existingDeck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
 
-        // Vérifie que l'utilisateur est le propriétaire
+        // Vérifie que c'est bien SON deck (sécurité)
         if (!existingDeck.getUser().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("Vous n'êtes pas autorisé à modifier ce deck");
         }
 
-        // Met à jour les champs
+        // Met à jour les champs simples
         existingDeck.setName(deckDto.getName());
         existingDeck.setDescription(deckDto.getDescription());
 
-        // Met à jour la langue si changée
+        // Met à jour la langue si elle a changé
         if (deckDto.getLangueId() != null && !deckDto.getLangueId().equals(existingDeck.getLangue().getId())) {
             Langue langue = langueRepository.findById(deckDto.getLangueId())
                     .orElseThrow(() -> new ResourceNotFoundException("Langue", "id", deckDto.getLangueId()));
             existingDeck.setLangue(langue);
         }
 
-        Deck updatedDeck = deckRepository.save(existingDeck);
+        Deck updatedDeck = deckRepository.save(existingDeck);  // UPDATE decks
         return deckMapper.toDto(updatedDeck);
     }
 
-    // Supprime un deck
     @Transactional
     public void deleteDeck(Long id) {
         Utilisateur currentUser = getCurrentUser();
@@ -117,18 +112,22 @@ public class DeckService {
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
 
-        // Vérifie que l'utilisateur est le propriétaire
+        // Vérifie que c'est bien SON deck
         if (!deck.getUser().getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("Vous n'êtes pas autorisé à supprimer ce deck");
         }
 
-        deckRepository.delete(deck);
+        deckRepository.delete(deck);  // DELETE FROM decks (+ cascade = supprime flashcards aussi)
     }
 
-    // Recherche des decks par nom
+    // Recherche des decks par nom (LIKE %name%)
     public List<DeckDto> searchDecksByName(String name) {
         Utilisateur currentUser = getCurrentUser();
-        List<Deck> decks = deckRepository.findByUserIdAndNameContaining(currentUser.getId(), name);
+        List<Deck> decks = deckRepository.findByUserIdAndNameContaining(currentUser.getId(), name);  // WHERE name LIKE %?%
         return deckMapper.toDtoList(decks);
     }
 }
+
+// Service pour gérer les decks (listes de flashcards)
+// Toujours vérifie que l'utilisateur est propriétaire avant modification/suppression (sécurité)
+// getCurrentUser() récupère l'user connecté via le JWT (mis dans SecurityContext par JwtAuthenticationFilter)

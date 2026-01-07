@@ -9,9 +9,6 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ENTITÉ TRADUCTION - Représente une traduction d'une flashcard
- */
 @Entity
 @Table(name = "traductions")
 @Getter
@@ -24,21 +21,26 @@ public class Traduction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Texte traduit (dans la langue de l'apprenant)
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String texte;
+    private String texte;  // "Pomme", "Bonjour", "Table"
 
-    // Langue de cette traduction
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "langue_id", nullable = false)
-    private Langue langue;
+    @ManyToOne(fetch = FetchType.LAZY)  // Plusieurs traductions → Une langue
+    @JoinColumn(name = "langue_id", nullable = false)  // FK vers table langues
+    private Langue langue;  // Dans quelle langue est cette traduction (ex: Français)
 
-    // Flashcard associée
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "flashcard_id", nullable = false)
-    private Flashcard flashcard;
+    @ManyToOne(fetch = FetchType.LAZY)  // Plusieurs traductions → Une flashcard
+    @JoinColumn(name = "flashcard_id", nullable = false)  // FK vers table flashcards
+    private Flashcard flashcard;  // Pour quelle flashcard est cette traduction
 
-    // Exemples pour cette traduction
     @OneToMany(mappedBy = "traduction", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Exemple> exemples = new ArrayList<>();
+    private List<Exemple> exemples = new ArrayList<>();  // Une traduction peut avoir plusieurs exemples
+    // cascade = CascadeType.ALL : Suppression traduction → suppression exemples
+    // orphanRemoval = true : Retrait exemple de la liste → suppression DB
+    // mappedBy = "traduction" : FK dans table exemples
+
 }
+
+// Niveau intermédiaire : Flashcard → Traduction → Exemple
+// Permet d'avoir plusieurs traductions pour un même mot (ex: "Apple" → "Pomme" en FR + "Manzana" en ES)
+// Chaque traduction peut avoir plusieurs exemples d'utilisation en phrases
+// Hibernate génère : CREATE TABLE traductions (id, texte, langue_id, flashcard_id)

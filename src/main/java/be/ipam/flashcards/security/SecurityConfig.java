@@ -17,12 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Configuration de Spring Security
- */
-@Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
+@Configuration  // Classe de configuration Spring
+@EnableWebSecurity  // Active Spring Security
+@EnableMethodSecurity  // Active @PreAuthorize sur les méthodes (ex: @PreAuthorize("hasRole('GESTIONNAIRE')"))
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -33,45 +30,51 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
-    @Bean
+    @Bean  // Définit la chaîne de filtres de sécurité
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)  // Désactive CSRF (pas nécessaire pour API REST stateless)
                 .authorizeHttpRequests(auth -> auth
-                        // Routes publiques (pas besoin de token)
+                        // Routes PUBLIQUES (accessibles sans token JWT)
                         .requestMatchers(
-                                "/api/auth/**",           // Authentification
-                                "/swagger-ui/**",         // Swagger UI
-                                "/v3/api-docs/**",        // OpenAPI docs
-                                "/swagger-ui.html"        // Swagger page
-                        ).permitAll()
-                        // Toutes les autres routes nécessitent une authentification
-                        .anyRequest().authenticated()
+                                "/api/auth/**",           // /register, /login
+                                "/swagger-ui/**",         // Interface Swagger
+                                "/v3/api-docs/**",        // Documentation OpenAPI
+                                "/swagger-ui.html"        // Page Swagger
+                        ).permitAll()  // Autorise tout le monde
+                        // Toutes les AUTRES routes nécessitent une authentification
+                        .anyRequest().authenticated()  // JWT requis
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // Pas de session côté serveur (JWT)
                 )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(authenticationProvider())  // Provider pour vérifier user/password
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);  // Ajoute notre filtre JWT AVANT le filtre par défaut
 
         return http.build();
     }
 
-    @Bean
+    @Bean  // Provider pour authentifier avec username + password
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setUserDetailsService(userDetailsService);  // Service pour charger l'utilisateur
+        authProvider.setPasswordEncoder(passwordEncoder());  // Encoder pour vérifier le password
         return authProvider;
     }
 
-    @Bean
+    @Bean  // Manager d'authentification utilisé par AuthService
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    @Bean
+    @Bean  // Encoder BCrypt pour crypter/vérifier les passwords
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder();  // Algo BCrypt (hash à sens unique)
     }
 }
+
+// Configuration centrale de la sécurité
+// Flow : Requête → JwtAuthenticationFilter (vérifie token) → Controller (si authentifié)
+// Routes publiques : /api/auth/**, /swagger-ui/** (pas de token requis)
+// Routes protégées : Toutes les autres (token JWT obligatoire)
+// STATELESS : Pas de session serveur, toute l'info est dans le token JWT

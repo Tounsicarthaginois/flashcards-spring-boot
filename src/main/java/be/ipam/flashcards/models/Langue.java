@@ -6,9 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * ENTITÉ LANGUE - Représente une langue (Français, Anglais, etc.)
- */
 @Entity
 @Table(name = "langues")
 @Getter
@@ -21,9 +18,15 @@ public class Langue {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String nom;  // Français, Anglais, Espagnol...
+    @Column(nullable = false, unique = true, length = 100)  // UNIQUE empêche les doublons
+    private String nom;  // "Français", "Anglais", "Espagnol"
 
-    @Column(nullable = false, unique = true, length = 5)
-    private String code;  // fr, en, es...
+    @Column(nullable = false, unique = true, length = 5)  // Code court (2-3 caractères)
+    private String code;  // "fr", "en", "es" (code ISO 639-1)
 }
+
+// Table de référence simple
+// UNIQUE garantit qu'on ne peut pas créer deux fois "Français" ou deux fois "fr"
+// Pas de @PrePersist (pas de valeurs par défaut à initialiser)
+// Seuls les GESTIONNAIRE peuvent créer/modifier/supprimer des langues
+// Hibernate génère : CREATE TABLE langues (id, nom VARCHAR(100) UNIQUE, code VARCHAR(5) UNIQUE)

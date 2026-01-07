@@ -7,12 +7,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Mapper pour les langues
- */
 @Component
 public class LangueMapper {
 
+    // Convertit Langue (DB) → LangueDto (API)
     public LangueDto toDto(Langue langue) {
         if (langue == null) {
             return null;
@@ -20,12 +18,13 @@ public class LangueMapper {
 
         LangueDto dto = new LangueDto();
         dto.setId(langue.getId());
-        dto.setNom(langue.getNom());
-        dto.setCode(langue.getCode());
+        dto.setNom(langue.getNom());  // "Français"
+        dto.setCode(langue.getCode());  // "fr"
 
         return dto;
     }
 
+    // Convertit LangueDto (API) → Langue (DB)
     public Langue toEntity(LangueDto dto) {
         if (dto == null) {
             return null;
@@ -38,6 +37,7 @@ public class LangueMapper {
         return langue;
     }
 
+    // Convertit une liste de langues
     public List<LangueDto> toDtoList(List<Langue> langues) {
         if (langues == null) {
             return null;
@@ -47,3 +47,6 @@ public class LangueMapper {
                 .collect(Collectors.toList());
     }
 }
+
+// Mapper simple sans dépendances (pas de relations imbriquées)
+// Utilisé par LangueService et aussi par d'autres mappers (DeckMapper, TraductionMapper)

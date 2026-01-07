@@ -7,18 +7,16 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Mapper pour les Flashcards
- */
 @Component
 public class FlashcardMapper {
 
-    private final TraductionMapper traductionMapper;
+    private final TraductionMapper traductionMapper;  // Injecté pour mapper les traductions imbriquées
 
-    public FlashcardMapper(TraductionMapper traductionMapper) {
+    public FlashcardMapper(TraductionMapper traductionMapper) {  // Injection par constructeur
         this.traductionMapper = traductionMapper;
     }
 
+    // Convertit Flashcard (DB) → FlashcardDto (API) avec traductions complètes
     public FlashcardDto toDto(Flashcard flashcard) {
         if (flashcard == null) {
             return null;
@@ -26,14 +24,15 @@ public class FlashcardMapper {
 
         FlashcardDto dto = new FlashcardDto();
         dto.setId(flashcard.getId());
-        dto.setQuestion(flashcard.getQuestion());
-        dto.setDeckId(flashcard.getDeck() != null ? flashcard.getDeck().getId() : null);
+        dto.setQuestion(flashcard.getQuestion());  // "Apple"
+        dto.setDeckId(flashcard.getDeck() != null ? flashcard.getDeck().getId() : null);  // ID du deck parent
         dto.setCreatedAt(flashcard.getCreatedAt());
-        dto.setTraductions(traductionMapper.toDtoList(flashcard.getTraductions()));
+        dto.setTraductions(traductionMapper.toDtoList(flashcard.getTraductions()));  // Délègue au TraductionMapper
 
         return dto;
     }
 
+    // Convertit FlashcardDto (API) → Flashcard (DB)
     public Flashcard toEntity(FlashcardDto dto) {
         if (dto == null) {
             return null;
@@ -41,10 +40,12 @@ public class FlashcardMapper {
 
         Flashcard flashcard = new Flashcard();
         flashcard.setQuestion(dto.getQuestion());
+        // Note : deck et traductions sont gérés dans le Service (relations complexes)
 
         return flashcard;
     }
 
+    // Convertit une liste de flashcards
     public List<FlashcardDto> toDtoList(List<Flashcard> flashcards) {
         if (flashcards == null) {
             return null;
@@ -54,3 +55,6 @@ public class FlashcardMapper {
                 .collect(Collectors.toList());
     }
 }
+
+// Mapper avec dépendance (TraductionMapper) pour gérer la structure imbriquée
+// toDto() convertit Flashcard → FlashcardDto → List<TraductionDto> → List<ExempleDto>

@@ -16,44 +16,40 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Service pour gérer les abonnements
- */
-@Service
+@Service  // Service Spring (logique métier)
 public class AbonnementService {
 
     private final AbonnementRepository abonnementRepository;
     private final DeckRepository deckRepository;
     private final UtilisateurRepository utilisateurRepository;
 
-    public AbonnementService(
-            AbonnementRepository abonnementRepository,
-            DeckRepository deckRepository,
-            UtilisateurRepository utilisateurRepository
+    public AbonnementService(  // Injection des repositories par constructeur
+                               AbonnementRepository abonnementRepository,
+                               DeckRepository deckRepository,
+                               UtilisateurRepository utilisateurRepository
     ) {
         this.abonnementRepository = abonnementRepository;
         this.deckRepository = deckRepository;
         this.utilisateurRepository = utilisateurRepository;
     }
 
-    // Récupère l'utilisateur connecté
+    // Récupère l'utilisateur actuellement connecté via JWT
     private Utilisateur getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        return utilisateurRepository.findByEmail(email)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();  // Récupère l'authentification
+        String email = auth.getName();  // Récupère le "username" = email dans notre cas
+        return utilisateurRepository.findByEmail(email)  // Cherche l'utilisateur en DB
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", email));
     }
 
-    // S'abonner à un deck
-    @Transactional
+    @Transactional  // Transaction DB (commit si succès, rollback si erreur)
     public AbonnementDto abonner(Long deckId) {
-        Utilisateur user = getCurrentUser();
+        Utilisateur user = getCurrentUser();  // Récupère l'user connecté
 
-        // Vérifie si le deck existe
+        // Vérifie que le deck existe
         Deck deck = deckRepository.findById(deckId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", deckId));
 
-        // Vérifie si déjà abonné
+        // Vérifie que l'user n'est pas déjà abonné (évite doublons)
         if (abonnementRepository.existsByUtilisateurIdAndDeckId(user.getId(), deckId)) {
             throw new IllegalArgumentException("Vous êtes déjà abonné à ce deck");
         }
@@ -62,29 +58,30 @@ public class AbonnementService {
         Abonnement abonnement = new Abonnement();
         abonnement.setUtilisateur(user);
         abonnement.setDeck(deck);
-        abonnement.setNouveauxMotsParJour(10); // Valeur par défaut
+        abonnement.setNouveauxMotsParJour(10);  // Valeur par défaut (paramètre d'apprentissage)
 
-        Abonnement saved = abonnementRepository.save(abonnement);
-        return toDto(saved);
+        Abonnement saved = abonnementRepository.save(abonnement);  // INSERT INTO abonnements
+        return toDto(saved);  // Convertit en DTO pour renvoyer
     }
 
-    // Se désabonner d'un deck
     @Transactional
     public void desabonner(Long deckId) {
         Utilisateur user = getCurrentUser();
 
+        // Cherche l'abonnement
         Abonnement abonnement = abonnementRepository
                 .findByUtilisateurIdAndDeckId(user.getId(), deckId)
                 .orElseThrow(() -> new ResourceNotFoundException("Abonnement", "deckId", deckId));
 
-        abonnementRepository.delete(abonnement);
+        abonnementRepository.delete(abonnement);  // DELETE FROM abonnements WHERE id = ?
     }
 
-    // Récupère les abonnements de l'utilisateur
+    // Récupère tous les abonnements de l'utilisateur connecté
     public List<AbonnementDto> getMesAbonnements() {
         Utilisateur user = getCurrentUser();
-        List<Abonnement> abonnements = abonnementRepository.findByUtilisateurId(user.getId());
+        List<Abonnement> abonnements = abonnementRepository.findByUtilisateurId(user.getId());  // SELECT par user_id
 
+        // Convertit chaque entité en DTO
         List<AbonnementDto> dtos = new ArrayList<>();
         for (Abonnement abo : abonnements) {
             dtos.add(toDto(abo));
@@ -92,29 +89,33 @@ public class AbonnementService {
         return dtos;
     }
 
-    // Met à jour le nombre de nouveaux mots par jour
     @Transactional
     public AbonnementDto updateNouveauxMotsParJour(Long deckId, Integer nouveauxMots) {
         Utilisateur user = getCurrentUser();
 
+        // Récupère l'abonnement
         Abonnement abonnement = abonnementRepository
                 .findByUtilisateurIdAndDeckId(user.getId(), deckId)
                 .orElseThrow(() -> new ResourceNotFoundException("Abonnement", "deckId", deckId));
 
-        abonnement.setNouveauxMotsParJour(nouveauxMots);
-        Abonnement updated = abonnementRepository.save(abonnement);
+        abonnement.setNouveauxMotsParJour(nouveauxMots);  // Modifie le paramètre
+        Abonnement updated = abonnementRepository.save(abonnement);  // UPDATE
         return toDto(updated);
     }
 
-    // Convertit une entité en DTO
+    // Convertit Abonnement (entité) → AbonnementDto (pour l'API)
     private AbonnementDto toDto(Abonnement abonnement) {
         AbonnementDto dto = new AbonnementDto();
         dto.setId(abonnement.getId());
         dto.setUtilisateurId(abonnement.getUtilisateur().getId());
         dto.setDeckId(abonnement.getDeck().getId());
-        dto.setDeckNom(abonnement.getDeck().getName());
+        dto.setDeckNom(abonnement.getDeck().getName());  // Pour affichage
         dto.setNouveauxMotsParJour(abonnement.getNouveauxMotsParJour());
         dto.setDateAbonnement(abonnement.getDateAbonnement());
         return dto;
     }
 }
+
+// Service pour gérer les abonnements aux decks
+// Permet de s'abonner/désabonner et de paramétrer combien de nouveaux mots par jour
+// getCurrentUser() récupère l'utilisateur connecté grâce au JWT (mis dans SecurityContext par JwtAuthenticationFilter)

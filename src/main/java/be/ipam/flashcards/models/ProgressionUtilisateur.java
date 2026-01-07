@@ -9,9 +9,6 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/**
- * ENTITÉ PROGRESSION UTILISATEUR - Suit la progression d'un utilisateur pour une flashcard
- */
 @Entity
 @Table(name = "progressions")
 @Getter
@@ -24,41 +21,34 @@ public class ProgressionUtilisateur {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Utilisateur
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)  // Plusieurs progressions → Un utilisateur
     @JoinColumn(name = "utilisateur_id", nullable = false)
-    private Utilisateur utilisateur;
+    private Utilisateur utilisateur;  // Quel utilisateur
 
-    // Flashcard
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)  // Plusieurs progressions → Une flashcard
     @JoinColumn(name = "flashcard_id", nullable = false)
-    private Flashcard flashcard;
+    private Flashcard flashcard;  // Quelle flashcard
 
-    // État actuel
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)  // Stocke "NOUVEAU", "EN_COURS", "CONNU"
     @Column(nullable = false)
-    private EtatProgression etat = EtatProgression.NOUVEAU;
+    private EtatProgression etat = EtatProgression.NOUVEAU;  // État par défaut
 
-    // Niveau de connaissance (0-5)
     @Column(nullable = false)
-    private Integer niveauConnaissance = 0;
+    private Integer niveauConnaissance = 0;  // 0 = nouveau, 5 = maîtrisé
 
-    // Date de prochaine révision
     @Column(name = "prochaine_revision")
-    private LocalDateTime prochaineRevision;
+    private LocalDateTime prochaineRevision;  // Calculé par l'algorithme SRS (1j, 30j, 60j...)
 
-    // Nombre de révisions réussies consécutives
     @Column(name = "nb_revisions_reussies")
-    private Integer nbRevisionsReussies = 0;
+    private Integer nbRevisionsReussies = 0;  // Compteur de succès consécutifs
 
-    // Dernière révision
     @Column(name = "derniere_revision")
-    private LocalDateTime derniereRevision;
+    private LocalDateTime derniereRevision;  // Dernière fois que l'user a révisé
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
+    @PrePersist  // Initialise les valeurs par défaut avant insertion
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         if (this.etat == null) {
@@ -72,3 +62,8 @@ public class ProgressionUtilisateur {
         }
     }
 }
+
+// Table centrale du système SRS (répétition espacée)
+// Table intermédiaire N-N : Un utilisateur révise plusieurs flashcards, une flashcard est révisée par plusieurs utilisateurs
+// Contient toutes les stats nécessaires pour l'algorithme de révision espacée
+// Hibernate génère : CREATE TABLE progressions (id, utilisateur_id, flashcard_id, etat, niveau_connaissance, prochaine_revision, nb_revisions_reussies, derniere_revision, created_at)

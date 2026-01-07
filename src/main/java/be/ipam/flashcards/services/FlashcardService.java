@@ -13,9 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Service pour gérer les flashcards
- */
 @Service
 public class FlashcardService {
 
@@ -38,72 +35,78 @@ public class FlashcardService {
 
     // Récupère toutes les flashcards d'un deck
     public List<FlashcardDto> getFlashcardsByDeckId(Long deckId) {
-        List<Flashcard> flashcards = flashcardRepository.findByDeckId(deckId);
-        return flashcardMapper.toDtoList(flashcards);
+        List<Flashcard> flashcards = flashcardRepository.findByDeckId(deckId);  // SELECT WHERE deck_id = ?
+        return flashcardMapper.toDtoList(flashcards);  // Convertit avec toute la structure imbriquée
     }
 
-    // Récupère une flashcard par ID
+    // Récupère UNE flashcard par ID
     public FlashcardDto getFlashcardById(Long id) {
         Flashcard flashcard = flashcardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard", "id", id));
-        return flashcardMapper.toDto(flashcard);
+        return flashcardMapper.toDto(flashcard);  // Avec traductions et exemples
     }
 
-    // Crée une flashcard complète avec traductions et exemples
-    @Transactional
+    @Transactional  // Important : toute la création doit réussir ou échouer ensemble
     public FlashcardDto createFlashcard(FlashcardDto flashcardDto) {
-        // Récupère le deck
+        // 1. Vérifie que le deck existe
         Deck deck = deckRepository.findById(flashcardDto.getDeckId())
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", flashcardDto.getDeckId()));
 
-        // Crée la flashcard
+        // 2. Crée la flashcard (juste la question)
         Flashcard flashcard = flashcardMapper.toEntity(flashcardDto);
-        flashcard.setDeck(deck);
+        flashcard.setDeck(deck);  // Définit la relation @ManyToOne
 
-        // Ajoute les traductions
+        // 3. Crée les traductions (si présentes)
         if (flashcardDto.getTraductions() != null) {
             List<Traduction> traductions = new ArrayList<>();
 
-            for (TraductionDto tradDto : flashcardDto.getTraductions()) {
+            for (TraductionDto tradDto : flashcardDto.getTraductions()) {  // Boucle sur chaque traduction
+                // Vérifie que la langue existe
                 Langue langue = langueRepository.findById(tradDto.getLangueId())
                         .orElseThrow(() -> new ResourceNotFoundException("Langue", "id", tradDto.getLangueId()));
 
+                // Crée la traduction
                 Traduction traduction = new Traduction();
-                traduction.setTexte(tradDto.getTexte());
-                traduction.setLangue(langue);
-                traduction.setFlashcard(flashcard);
+                traduction.setTexte(tradDto.getTexte());  // "Pomme"
+                traduction.setLangue(langue);  // Français
+                traduction.setFlashcard(flashcard);  // Lie à la flashcard
 
-                // Ajoute les exemples
+                // 4. Crée les exemples (si présents)
                 if (tradDto.getExemples() != null) {
                     List<Exemple> exemples = new ArrayList<>();
 
-                    for (ExempleDto exDto : tradDto.getExemples()) {
+                    for (ExempleDto exDto : tradDto.getExemples()) {  // Boucle sur chaque exemple
                         Exemple exemple = new Exemple();
-                        exemple.setPhraseOriginal(exDto.getPhraseOriginal());
-                        exemple.setPhraseTraduite(exDto.getPhraseTraduite());
-                        exemple.setTraduction(traduction);
+                        exemple.setPhraseOriginal(exDto.getPhraseOriginal());  // "I eat an apple"
+                        exemple.setPhraseTraduite(exDto.getPhraseTraduite());  // "Je mange une pomme"
+                        exemple.setTraduction(traduction);  // Lie à la traduction
                         exemples.add(exemple);
                     }
 
-                    traduction.setExemples(exemples);
+                    traduction.setExemples(exemples);  // Ajoute les exemples à la traduction
                 }
 
                 traductions.add(traduction);
             }
 
-            flashcard.setTraductions(traductions);
+            flashcard.setTraductions(traductions);  // Ajoute les traductions à la flashcard
         }
 
-        Flashcard savedFlashcard = flashcardRepository.save(flashcard);
-        return flashcardMapper.toDto(savedFlashcard);
+        // 5. Sauvegarde TOUT en cascade (flashcard + traductions + exemples)
+        Flashcard savedFlashcard = flashcardRepository.save(flashcard);  // Cascade sauvegarde tout
+        return flashcardMapper.toDto(savedFlashcard);  // Renvoie la structure complète
     }
 
-    // Supprime une flashcard
     @Transactional
     public void deleteFlashcard(Long id) {
-        if (!flashcardRepository.existsById(id)) {
+        if (!flashcardRepository.existsById(id)) {  // Vérifie existence
             throw new ResourceNotFoundException("Flashcard", "id", id);
         }
-        flashcardRepository.deleteById(id);
+        flashcardRepository.deleteById(id);  // CASCADE supprime aussi traductions et exemples
     }
 }
+
+// Service complexe : gère la création de structures imbriquées (Flashcard → Traduction → Exemple)
+// createFlashcard() crée TOUTE la structure en une seule transaction grâce à cascade = CascadeType.ALL
+// Structure : Flashcard ("Apple") → Traduction ("Pomme", FR) → Exemple ("I eat an apple" / "Je mange une pomme")
+// Une seule sauvegarde (flashcardRepository.save) déclenche l'insertion de tout grâce au cascade

@@ -14,9 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controller pour les utilisateurs
- */
 @RestController
 @RequestMapping("/api/utilisateurs")
 @Tag(name = "Utilisateurs", description = "API de gestion des utilisateurs")
@@ -32,10 +29,10 @@ public class UtilisateurController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
     })
-    @GetMapping
+    @GetMapping  // GET /api/utilisateurs - Liste tous les utilisateurs (SANS password)
     public ResponseEntity<List<UtilisateurDto>> getAllUtilisateurs() {
-        List<UtilisateurDto> utilisateurs = utilisateurService.getAllUtilisateurs();
-        return ResponseEntity.ok(utilisateurs);
+        List<UtilisateurDto> utilisateurs = utilisateurService.getAllUtilisateurs();  // Renvoie UtilisateurDto (pas d'entité directe)
+        return ResponseEntity.ok(utilisateurs);  // DTO garantit que password n'est jamais exposé
     }
 
     @Operation(summary = "Récupère un utilisateur par ID")
@@ -44,10 +41,10 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/{id}")
+    @GetMapping("/{id}")  // GET /api/utilisateurs/5 - Cherche par ID
     public ResponseEntity<UtilisateurDto> getUtilisateurById(@PathVariable Long id) {
         UtilisateurDto utilisateur = utilisateurService.getUtilisateurById(id);
-        return ResponseEntity.ok(utilisateur);
+        return ResponseEntity.ok(utilisateur);  // 200 + utilisateur (email, nom, prenom, role...)
     }
 
     @Operation(summary = "Récupère un utilisateur par email")
@@ -56,9 +53,9 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/par-email")
-    public ResponseEntity<UtilisateurDto> getUtilisateurByEmail(@RequestParam String email) {
-        UtilisateurDto utilisateur = utilisateurService.getUtilisateurByEmail(email);
+    @GetMapping("/par-email")  // GET /api/utilisateurs/par-email?email=test@test.com
+    public ResponseEntity<UtilisateurDto> getUtilisateurByEmail(@RequestParam String email) {  // @RequestParam récupère ?email=xxx
+        UtilisateurDto utilisateur = utilisateurService.getUtilisateurByEmail(email);  // Cherche par email unique
         return ResponseEntity.ok(utilisateur);
     }
 
@@ -68,12 +65,12 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PutMapping("/{id}")
+    @PutMapping("/{id}")  // PUT /api/utilisateurs/5 - Modifie l'utilisateur 5
     public ResponseEntity<UtilisateurDto> updateUtilisateur(
-            @PathVariable Long id,
-            @RequestBody UtilisateurDto utilisateurDto) {
-        UtilisateurDto updated = utilisateurService.updateUtilisateur(id, utilisateurDto);
-        return ResponseEntity.ok(updated);
+            @PathVariable Long id,  // ID dans l'URL
+            @RequestBody UtilisateurDto utilisateurDto) {  // Nouvelles données en JSON
+        UtilisateurDto updated = utilisateurService.updateUtilisateur(id, utilisateurDto);  // Met à jour nom, prenom, etc.
+        return ResponseEntity.ok(updated);  // 200 + utilisateur modifié
     }
 
     @Operation(summary = "Supprime un utilisateur")
@@ -82,9 +79,12 @@ public class UtilisateurController {
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")  // DELETE /api/utilisateurs/5 - Supprime l'utilisateur 5
     public ResponseEntity<Void> deleteUtilisateur(@PathVariable Long id) {
-        utilisateurService.deleteUtilisateur(id);
-        return ResponseEntity.noContent().build();
+        utilisateurService.deleteUtilisateur(id);  // Supprime l'utilisateur (attention : ses decks, progressions aussi ?)
+        return ResponseEntity.noContent().build();  // 204 No Content
     }
 }
+
+// Important : UtilisateurDto ne contient JAMAIS le password (sécurité)
+// Le mapper Entity → DTO exclut automatiquement le password

@@ -12,8 +12,11 @@ import lombok.NoArgsConstructor;
 public class LoginRequest {
 
     @Schema(description = "Email", example = "user@example.com", required = true)
-    private String email;
+    private String email;  // Email de l'utilisateur (unique en DB)
 
     @Schema(description = "Mot de passe", example = "password123", required = true)
-    private String password;
+    private String password;  // Mot de passe en clair (sera vérifié avec BCrypt côté service)
 }
+
+// DTO envoyé par le client pour se connecter
+// AuthService vérifie email + password, puis génère un token JWT si OK

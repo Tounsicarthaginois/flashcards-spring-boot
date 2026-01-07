@@ -6,17 +6,22 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-/**
- * Repository pour les langues
- */
 @Repository
 public interface LangueRepository extends JpaRepository<Langue, Long> {
 
-    Optional<Langue> findByCode(String code);
+    // Spring génère : SELECT * FROM langues WHERE code = ?
+    Optional<Langue> findByCode(String code);  // Recherche par code ("fr", "en", "es")
 
-    Optional<Langue> findByNom(String nom);
+    // Spring génère : SELECT * FROM langues WHERE nom = ?
+    Optional<Langue> findByNom(String nom);  // Recherche par nom ("Français", "Anglais")
 
-    boolean existsByCode(String code);
+    // Spring génère : SELECT EXISTS(SELECT 1 FROM langues WHERE code = ?)
+    boolean existsByCode(String code);  // Vérifie si le code existe déjà (pour éviter doublons)
 
-    boolean existsByNom(String nom);
+    // Spring génère : SELECT EXISTS(SELECT 1 FROM langues WHERE nom = ?)
+    boolean existsByNom(String nom);  // Vérifie si le nom existe déjà
 }
+
+// Repository pour gérer les langues disponibles
+// existsByCode/Nom utilisés avant création pour empêcher doublons (même si UNIQUE en DB fait la vérif)
+// Optional = peut retourner null si pas trouvé (évite NullPointerException)

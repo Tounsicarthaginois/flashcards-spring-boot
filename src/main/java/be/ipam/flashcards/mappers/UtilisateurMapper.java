@@ -4,13 +4,10 @@ import be.ipam.flashcards.dto.UtilisateurDto;
 import be.ipam.flashcards.models.Utilisateur;
 import org.springframework.stereotype.Component;
 
-/**
- * MAPPER UTILISATEUR - Conversion manuelle
- */
 @Component
 public class UtilisateurMapper {
 
-    // Convertit Utilisateur → UtilisateurDto (SANS le mot de passe)
+    // Convertit Utilisateur (DB) → UtilisateurDto (API) SANS password
     public UtilisateurDto toDto(Utilisateur utilisateur) {
         if (utilisateur == null) {
             return null;
@@ -21,12 +18,13 @@ public class UtilisateurMapper {
         dto.setEmail(utilisateur.getEmail());
         dto.setNom(utilisateur.getNom());
         dto.setPrenom(utilisateur.getPrenom());
-        // Pas de mot de passe dans le DTO !
+        // IMPORTANT : Pas de password dans le DTO ! (sécurité)
+        // Même crypté, on ne l'expose jamais dans l'API
 
         return dto;
     }
 
-    // Convertit UtilisateurDto → Utilisateur (pour création/mise à jour)
+    // Convertit UtilisateurDto (API) → Utilisateur (DB)
     public Utilisateur toEntity(UtilisateurDto dto) {
         if (dto == null) {
             return null;
@@ -36,8 +34,12 @@ public class UtilisateurMapper {
         utilisateur.setEmail(dto.getEmail());
         utilisateur.setNom(dto.getNom());
         utilisateur.setPrenom(dto.getPrenom());
-        // Le mot de passe sera géré séparément par le service
+        // Note : password et role sont gérés dans AuthService (cryptage BCrypt, rôle par défaut)
 
         return utilisateur;
     }
 }
+
+// Mapper critique pour la sécurité : exclut le password du DTO
+// Utilisé par AuthService et UtilisateurService
+// Différence avec les autres mappers : pas de méthode toDtoList() (pas souvent besoin de lister tous les users)

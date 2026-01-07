@@ -6,9 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * ENTITÉ EXEMPLE - Représente une phrase exemple avec sa traduction
- */
 @Entity
 @Table(name = "exemples")
 @Getter
@@ -21,16 +18,17 @@ public class Exemple {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Phrase exemple dans la langue étudiée
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String phraseOriginal;
+    @Column(nullable = false, columnDefinition = "TEXT")  // Type TEXT pour phrases longues
+    private String phraseOriginal;  // "I eat an apple every day"
 
-    // Traduction de la phrase exemple
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String phraseTraduite;
+    private String phraseTraduite;  // "Je mange une pomme chaque jour"
 
-    // Traduction associée
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "traduction_id", nullable = false)
-    private Traduction traduction;
+    @ManyToOne(fetch = FetchType.LAZY)  // Plusieurs exemples → Une traduction
+    @JoinColumn(name = "traduction_id", nullable = false)  // FK vers table traductions
+    private Traduction traduction;  // À quelle traduction appartient cet exemple
 }
+
+// Table la plus profonde dans la hiérarchie : Deck → Flashcard → Traduction → Exemple
+// Permet de montrer comment utiliser le mot dans des phrases concrètes
+// Hibernate génère : CREATE TABLE exemples (id, phrase_original, phrase_traduite, traduction_id)
