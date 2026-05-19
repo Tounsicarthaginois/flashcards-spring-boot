@@ -16,10 +16,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@Configuration  // Classe de configuration Spring
-@EnableWebSecurity  // Active Spring Security
-@EnableMethodSecurity  // Active @PreAuthorize sur les méthodes (ex: @PreAuthorize("hasRole('GESTIONNAIRE')"))
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -30,51 +35,62 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
-    @Bean  // Définit la chaîne de filtres de sécurité
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)  // Désactive CSRF (pas nécessaire pour API REST stateless)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Routes PUBLIQUES (accessibles sans token JWT)
                         .requestMatchers(
-                                "/api/auth/**",           // /register, /login
-                                "/swagger-ui/**",         // Interface Swagger
-                                "/v3/api-docs/**",        // Documentation OpenAPI
-                                "/swagger-ui.html"        // Page Swagger
-                        ).permitAll()  // Autorise tout le monde
-                        // Toutes les AUTRES routes nécessitent une authentification
-                        .anyRequest().authenticated()  // JWT requis
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // Pas de session côté serveur (JWT)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authenticationProvider(authenticationProvider())  // Provider pour vérifier user/password
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);  // Ajoute notre filtre JWT AVANT le filtre par défaut
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    @Bean  // Provider pour authentifier avec username + password
+    // Configuration CORS intégrée dans Spring Security
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Autorise Angular sur localhost:4200
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        // Autorise toutes les méthodes HTTP
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Autorise tous les headers
+        configuration.setAllowedHeaders(List.of("*"));
+        // Autorise le token JWT dans les headers
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);  // Service pour charger l'utilisateur
-        authProvider.setPasswordEncoder(passwordEncoder());  // Encoder pour vérifier le password
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
-    @Bean  // Manager d'authentification utilisé par AuthService
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    @Bean  // Encoder BCrypt pour crypter/vérifier les passwords
+    @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();  // Algo BCrypt (hash à sens unique)
+        return new BCryptPasswordEncoder();
     }
 }
-
-// Configuration centrale de la sécurité
-// Flow : Requête → JwtAuthenticationFilter (vérifie token) → Controller (si authentifié)
-// Routes publiques : /api/auth/**, /swagger-ui/** (pas de token requis)
-// Routes protégées : Toutes les autres (token JWT obligatoire)
-// STATELESS : Pas de session serveur, toute l'info est dans le token JWT
