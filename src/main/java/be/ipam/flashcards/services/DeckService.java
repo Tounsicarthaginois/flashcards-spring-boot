@@ -126,6 +126,34 @@ public class DeckService {
         List<Deck> decks = deckRepository.findByUserIdAndNameContaining(currentUser.getId(), name);  // WHERE name LIKE %?%
         return deckMapper.toDtoList(decks);
     }
+    // Récupère tous les decks PUBLIQUES en attente de validation (GESTIONNAIRE)
+    public List<DeckDto> getDecksPubliquesEnAttente() {
+        List<Deck> decks = deckRepository.findByType(TypeListe.PUBLIQUE);
+        return deckMapper.toDtoList(decks);
+    }
+
+    // Valide un deck PUBLIQUE → le passe en OFFICIELLE (GESTIONNAIRE)
+    @Transactional
+    public DeckDto validerDeck(Long id) {
+        Utilisateur validateur = getCurrentUser(); // Le gestionnaire connecté devient le validateur
+
+        Deck deck = deckRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", id));
+
+        // Change le type de PUBLIQUE → OFFICIELLE
+        deck.setType(TypeListe.OFFICIELLE);
+        // Enregistre qui a validé ce deck
+        deck.setValidateur(validateur);
+
+        Deck savedDeck = deckRepository.save(deck);
+        return deckMapper.toDto(savedDeck);
+    }
+
+    // Récupère tous les decks OFFICIELS (visibles par tous les utilisateurs)
+    public List<DeckDto> getDecksOfficiels() {
+        List<Deck> decks = deckRepository.findByType(TypeListe.OFFICIELLE);
+        return deckMapper.toDtoList(decks);
+    }
 }
 
 // Service pour gérer les decks (listes de flashcards)

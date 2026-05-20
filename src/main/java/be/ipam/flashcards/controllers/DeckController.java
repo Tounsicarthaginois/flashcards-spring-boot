@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -89,6 +90,28 @@ public class DeckController {
     public ResponseEntity<List<DeckDto>> searchDecks(@RequestParam String name) {  // @RequestParam récupère ?name=xxx
         List<DeckDto> decks = deckService.searchDecksByName(name);  // SQL LIKE %name%
         return ResponseEntity.ok(decks);  // 200 + liste filtrée
+    }
+    @Operation(summary = "Liste tous les decks PUBLIQUES en attente de validation")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Réservé aux GESTIONNAIRE
+    @GetMapping("/publiques")  // GET /api/decks/publiques
+    public ResponseEntity<List<DeckDto>> getDecksPubliques() {
+        List<DeckDto> decks = deckService.getDecksPubliquesEnAttente();
+        return ResponseEntity.ok(decks);
+    }
+
+    @Operation(summary = "Valide un deck PUBLIQUE → le passe en OFFICIELLE")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Réservé aux GESTIONNAIRE
+    @PutMapping("/{id}/valider")  // PUT /api/decks/5/valider
+    public ResponseEntity<DeckDto> validerDeck(@PathVariable Long id) {
+        DeckDto deck = deckService.validerDeck(id);
+        return ResponseEntity.ok(deck);
+    }
+
+    @Operation(summary = "Liste tous les decks OFFICIELS (visibles par tous)")
+    @GetMapping("/officiels")  // GET /api/decks/officiels - Accessible à tous
+    public ResponseEntity<List<DeckDto>> getDecksOfficiels() {
+        List<DeckDto> decks = deckService.getDecksOfficiels();
+        return ResponseEntity.ok(decks);
     }
 }
 
