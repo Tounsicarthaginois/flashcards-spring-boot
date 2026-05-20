@@ -33,10 +33,15 @@ public class Flashcard {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "flashcard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Traduction> traductions = new ArrayList<>();  // Une flashcard peut avoir plusieurs traductions
+    private List<Traduction> traductions = new ArrayList<>();
     // cascade = CascadeType.ALL : Suppression flashcard → suppression traductions
     // orphanRemoval = true : Retrait traduction de la liste → suppression DB
     // mappedBy = "flashcard" : FK dans table traductions
+
+    @OneToMany(mappedBy = "flashcard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ProgressionUtilisateur> progressions = new ArrayList<>();
+    // cascade = CascadeType.ALL : Suppression flashcard → suppression progressions liées
+    // Sans ça, la DB bloque la suppression si l'utilisateur a déjà révisé cette carte
 
     @PrePersist
     protected void onCreate() {

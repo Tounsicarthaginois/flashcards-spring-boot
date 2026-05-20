@@ -1,5 +1,6 @@
 package be.ipam.flashcards.controllers;
 
+import be.ipam.flashcards.dto.FlashcardDto;
 import be.ipam.flashcards.dto.ProgressionUtilisateurDto;
 import be.ipam.flashcards.dto.RevisionRequest;
 import be.ipam.flashcards.exception.ErrorResponse;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,31 +33,41 @@ public class ProgressionController {
             @ApiResponse(responseCode = "404", description = "Flashcard non trouvée",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PostMapping("/revision")  // POST /api/progressions/revision - Cœur du système SRS
-    public ResponseEntity<ProgressionUtilisateurDto> enregistrerRevision(@RequestBody RevisionRequest request) {  // Reçoit flashcardId + reussi (true/false)
-        ProgressionUtilisateurDto progression = progressionService.enregistrerRevision(request);  // Calcule prochaine révision (1j, 30j, 60j...)
-        return ResponseEntity.ok(progression);  // Renvoie progression mise à jour avec nouvelle date
+    @PostMapping("/revision")
+    // POST /api/progressions/revision → reçoit flashcardId + reussi (true/false)
+    // Calcule la prochaine date : 1j si raté, 30j ou 60j si réussi
+    public ResponseEntity<ProgressionUtilisateurDto> enregistrerRevision(@RequestBody RevisionRequest request) {
+        return ResponseEntity.ok(progressionService.enregistrerRevision(request));
     }
 
-    @Operation(summary = "Récupère les flashcards à réviser aujourd'hui")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
-    })
-    @GetMapping("/a-reviser")  // GET /api/progressions/a-reviser - Flashcards dont prochaineRevision <= maintenant
+    @Operation(summary = "Récupère les flashcards à réviser aujourd'hui pour un deck")
+    @GetMapping("/a-reviser/{deckId}")
+    // GET /api/progressions/a-reviser/{deckId}
+    // Retourne : nouvelles cartes + cartes dont la date est passée
+    // Exclut : cartes dont prochaineRevision est dans le futur
+    public ResponseEntity<List<FlashcardDto>> getCardsAReviserParDeck(@PathVariable Long deckId) {
+        return ResponseEntity.ok(progressionService.getCardsAReviserParDeck(deckId));
+    }
+
+    @Operation(summary = "Récupère les progressions SRS de l'utilisateur pour un deck")
+    @GetMapping("/deck/{deckId}")
+    // GET /api/progressions/deck/{deckId}
+    // Retourne les progressions existantes (cartes déjà révisées au moins 1 fois)
+    // Les cartes sans progression = nouvelles (pas dans la liste)
+    // Utilisé pour afficher les badges SRS sur la page flashcards
+    public ResponseEntity<List<ProgressionUtilisateurDto>> getProgressionsByDeck(@PathVariable Long deckId) {
+        return ResponseEntity.ok(progressionService.getProgressionsByDeck(deckId));
+    }
+
+    @Operation(summary = "Récupère les flashcards à réviser aujourd'hui (tous decks)")
+    @GetMapping("/a-reviser")
     public ResponseEntity<List<ProgressionUtilisateurDto>> getFlashcardsAReviser() {
-        List<ProgressionUtilisateurDto> flashcards = progressionService.getFlashcardsAReviser();  // Cherche WHERE prochaine_revision < NOW()
-        return ResponseEntity.ok(flashcards);  // Liste des cartes à réviser aujourd'hui
+        return ResponseEntity.ok(progressionService.getFlashcardsAReviser());
     }
 
     @Operation(summary = "Récupère toutes mes progressions")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
-    })
-    @GetMapping("/mes-progressions")  // GET /api/progressions/mes-progressions - Toutes mes stats
+    @GetMapping("/mes-progressions")
     public ResponseEntity<List<ProgressionUtilisateurDto>> getMesProgressions() {
-        List<ProgressionUtilisateurDto> progressions = progressionService.getMesProgressions();  // Toutes mes progressions (NOUVEAU, EN_COURS, CONNU)
-        return ResponseEntity.ok(progressions);  // Utile pour voir mes stats globales
+        return ResponseEntity.ok(progressionService.getMesProgressions());
     }
 }
-
-// Le service ProgressionService contient l'algorithme SRS complet (1j → 30j → 60j)

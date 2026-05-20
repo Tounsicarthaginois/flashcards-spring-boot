@@ -5,30 +5,32 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data  // Getters, setters, toString...
-@NoArgsConstructor  // Constructeur vide
-@AllArgsConstructor  // Constructeur avec tous les champs
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Réponse d'authentification")
 public class AuthResponse {
 
-    @Schema(description = "Token JWT", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-    private String token;  // Le token JWT à inclure dans les requêtes suivantes
+    @Schema(description = "Token JWT")
+    private String token;
 
     @Schema(description = "Type de token", example = "Bearer")
-    private String type = "Bearer";  // Toujours "Bearer" pour JWT (Authorization: Bearer <token>)
+    private String type = "Bearer";
 
-    @Schema(description = "Email de l'utilisateur", example = "user@example.com")
-    private String email;  // Email de l'utilisateur connecté
+    @Schema(description = "Email de l'utilisateur")
+    private String email;
 
     @Schema(description = "Rôle de l'utilisateur", example = "USER")
-    private String role;  // USER ou GESTIONNAIRE
+    private String role;
 
-    public AuthResponse(String token, String email, String role) {  // Constructeur custom sans type
-        this.token = token;  // (type est automatiquement "Bearer")
+    @Schema(description = "ID de l'utilisateur connecté")
+    private Long userId;  // Ajouté pour permettre de vérifier si l'user est le créateur d'un deck
+
+    // Constructeur utilisé dans AuthService (login + register)
+    public AuthResponse(String token, String email, String role, Long userId) {
+        this.token = token;
         this.email = email;
         this.role = role;
+        this.userId = userId;
     }
 }
-
-// Renvoyé par POST /api/auth/register et POST /api/auth/login
-// Le client doit copier le token et l'inclure dans toutes les requêtes suivantes

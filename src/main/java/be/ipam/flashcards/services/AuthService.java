@@ -20,15 +20,15 @@ import java.util.Collections;
 public class AuthService {
 
     private final UtilisateurRepository utilisateurRepository;
-    private final PasswordEncoder passwordEncoder;  // BCrypt
+    private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    public AuthService(  // Injection par constructeur
-                         UtilisateurRepository utilisateurRepository,
-                         PasswordEncoder passwordEncoder,
-                         JwtService jwtService,
-                         AuthenticationManager authenticationManager
+    public AuthService(
+            UtilisateurRepository utilisateurRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            AuthenticationManager authenticationManager
     ) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
@@ -38,68 +38,52 @@ public class AuthService {
 
     // Inscription d'un nouvel utilisateur
     public AuthResponse register(RegisterRequest request) {
-        // Vérifie que l'email n'est pas déjà utilisé
         if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Un compte existe déjà avec cet email");
         }
 
-        // Crée l'utilisateur
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setEmail(request.getEmail());
-        utilisateur.setPassword(passwordEncoder.encode(request.getPassword()));  // CRYPTE le password avec BCrypt
+        utilisateur.setPassword(passwordEncoder.encode(request.getPassword()));
         utilisateur.setNom(request.getNom());
         utilisateur.setPrenom(request.getPrenom());
-        utilisateur.setRole(Role.USER);  // Rôle par défaut
+        utilisateur.setRole(Role.USER);
 
-        // INSERT INTO utilisateurs
         utilisateurRepository.save(utilisateur);
 
-        // Crée un objet UserDetails pour générer le token
         UserDetails userDetails = User.builder()
-                .username(utilisateur.getEmail())  // Username = email
-                .password(utilisateur.getPassword())  // Password crypté
-                .authorities("ROLE_" + utilisateur.getRole().name())  // "ROLE_USER"
+                .username(utilisateur.getEmail())
+                .password(utilisateur.getPassword())
+                .authorities("ROLE_" + utilisateur.getRole().name())
                 .build();
 
-        // Génère le token JWT (valable 24h)
         String token = jwtService.generateToken(userDetails);
 
-        // Renvoie le token + infos utilisateur
-        return new AuthResponse(token, utilisateur.getEmail(), utilisateur.getRole().name());
+        // userId inclus dans la réponse pour que le front puisse vérifier le créateur d'un deck
+        return new AuthResponse(token, utilisateur.getEmail(), utilisateur.getRole().name(), utilisateur.getId());
     }
 
     // Connexion d'un utilisateur existant
     public AuthResponse login(LoginRequest request) {
-        // Authentifie l'utilisateur (vérifie email + password)
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),  // Email
-                        request.getPassword()  // Password en clair (sera vérifié avec BCrypt.matches())
+                        request.getEmail(),
+                        request.getPassword()
                 )
         );
-        // Si authentification échoue → exception AuthenticationException (gérée par GlobalExceptionHandler)
 
-        // Récupère l'utilisateur depuis la DB
         Utilisateur utilisateur = utilisateurRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Email ou mot de passe incorrect"));
 
-        // Crée UserDetails pour générer le token
         UserDetails userDetails = User.builder()
                 .username(utilisateur.getEmail())
                 .password(utilisateur.getPassword())
-                .authorities("ROLE_" + utilisateur.getRole().name())  // "ROLE_USER" ou "ROLE_GESTIONNAIRE"
+                .authorities("ROLE_" + utilisateur.getRole().name())
                 .build();
 
-        // Génère le token JWT
         String token = jwtService.generateToken(userDetails);
 
-        // Renvoie le token + infos utilisateur
-        return new AuthResponse(token, utilisateur.getEmail(), utilisateur.getRole().name());
+        // userId inclus dans la réponse
+        return new AuthResponse(token, utilisateur.getEmail(), utilisateur.getRole().name(), utilisateur.getId());
     }
 }
-
-// Service central pour l'authentification
-// register() : crée user + crypte password + génère token
-// login() : vérifie credentials + génère token
-// Le token JWT contient l'email et est signé (impossible à falsifier)
-// Le client doit ensuite inclure ce token dans toutes ses requêtes : Authorization: Bearer <token>
