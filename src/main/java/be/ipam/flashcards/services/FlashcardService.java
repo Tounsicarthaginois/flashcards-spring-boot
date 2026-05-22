@@ -3,10 +3,13 @@ package be.ipam.flashcards.services;
 import be.ipam.flashcards.dto.ExempleDto;
 import be.ipam.flashcards.dto.FlashcardDto;
 import be.ipam.flashcards.dto.TraductionDto;
+import be.ipam.flashcards.enums.Role;
 import be.ipam.flashcards.exception.ResourceNotFoundException;
 import be.ipam.flashcards.mappers.FlashcardMapper;
 import be.ipam.flashcards.models.*;
 import be.ipam.flashcards.repositories.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,94 +22,117 @@ public class FlashcardService {
     private final FlashcardRepository flashcardRepository;
     private final DeckRepository deckRepository;
     private final LangueRepository langueRepository;
+    private final UtilisateurRepository utilisateurRepository;
     private final FlashcardMapper flashcardMapper;
 
     public FlashcardService(
             FlashcardRepository flashcardRepository,
             DeckRepository deckRepository,
             LangueRepository langueRepository,
+            UtilisateurRepository utilisateurRepository,
             FlashcardMapper flashcardMapper
     ) {
         this.flashcardRepository = flashcardRepository;
         this.deckRepository = deckRepository;
         this.langueRepository = langueRepository;
+        this.utilisateurRepository = utilisateurRepository;
         this.flashcardMapper = flashcardMapper;
     }
 
-    // Récupère toutes les flashcards d'un deck
-    public List<FlashcardDto> getFlashcardsByDeckId(Long deckId) {
-        List<Flashcard> flashcards = flashcardRepository.findByDeckId(deckId);  // SELECT WHERE deck_id = ?
-        return flashcardMapper.toDtoList(flashcards);  // Convertit avec toute la structure imbriquée
+    // Récupère l'utilisateur connecté via le token JWT
+    private Utilisateur getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "email", email));
     }
 
-    // Récupère UNE flashcard par ID
+    // Récupère toutes les flashcards d'un deck
+    // Accessible à tous les utilisateurs connectés (pour voir les decks officiels)
+    public List<FlashcardDto> getFlashcardsByDeckId(Long deckId) {
+        List<Flashcard> flashcards = flashcardRepository.findByDeckId(deckId);
+        return flashcardMapper.toDtoList(flashcards);
+    }
+
+    // Récupère une flashcard par ID
     public FlashcardDto getFlashcardById(Long id) {
         Flashcard flashcard = flashcardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard", "id", id));
-        return flashcardMapper.toDto(flashcard);  // Avec traductions et exemples
+        return flashcardMapper.toDto(flashcard);
     }
 
-    @Transactional  // Important : toute la création doit réussir ou échouer ensemble
+    @Transactional
     public FlashcardDto createFlashcard(FlashcardDto flashcardDto) {
-        // 1. Vérifie que le deck existe
+        Utilisateur currentUser = getCurrentUser();
+
+        // Vérifie que le deck existe
         Deck deck = deckRepository.findById(flashcardDto.getDeckId())
                 .orElseThrow(() -> new ResourceNotFoundException("Deck", "id", flashcardDto.getDeckId()));
 
-        // 2. Crée la flashcard (juste la question)
-        Flashcard flashcard = flashcardMapper.toEntity(flashcardDto);
-        flashcard.setDeck(deck);  // Définit la relation @ManyToOne
+        // SÉCURITÉ : vérifie que l'utilisateur est le propriétaire du deck
+        // Exception : les GESTIONNAIRE peuvent ajouter des cartes partout
+        if (!deck.getUser().getId().equals(currentUser.getId())
+                && !currentUser.getRole().equals(Role.GESTIONNAIRE)) {
+            throw new IllegalArgumentException(
+                    "Vous n'êtes pas autorisé à ajouter une flashcard dans ce deck"
+            );
+        }
 
-        // 3. Crée les traductions (si présentes)
+        // Crée la flashcard
+        Flashcard flashcard = flashcardMapper.toEntity(flashcardDto);
+        flashcard.setDeck(deck);
+
+        // Crée les traductions avec leurs exemples
         if (flashcardDto.getTraductions() != null) {
             List<Traduction> traductions = new ArrayList<>();
 
-            for (TraductionDto tradDto : flashcardDto.getTraductions()) {  // Boucle sur chaque traduction
-                // Vérifie que la langue existe
+            for (TraductionDto tradDto : flashcardDto.getTraductions()) {
                 Langue langue = langueRepository.findById(tradDto.getLangueId())
                         .orElseThrow(() -> new ResourceNotFoundException("Langue", "id", tradDto.getLangueId()));
 
-                // Crée la traduction
                 Traduction traduction = new Traduction();
-                traduction.setTexte(tradDto.getTexte());  // "Pomme"
-                traduction.setLangue(langue);  // Français
-                traduction.setFlashcard(flashcard);  // Lie à la flashcard
+                traduction.setTexte(tradDto.getTexte());
+                traduction.setLangue(langue);
+                traduction.setFlashcard(flashcard);
 
-                // 4. Crée les exemples (si présents)
                 if (tradDto.getExemples() != null) {
                     List<Exemple> exemples = new ArrayList<>();
-
-                    for (ExempleDto exDto : tradDto.getExemples()) {  // Boucle sur chaque exemple
+                    for (ExempleDto exDto : tradDto.getExemples()) {
                         Exemple exemple = new Exemple();
-                        exemple.setPhraseOriginal(exDto.getPhraseOriginal());  // "I eat an apple"
-                        exemple.setPhraseTraduite(exDto.getPhraseTraduite());  // "Je mange une pomme"
-                        exemple.setTraduction(traduction);  // Lie à la traduction
+                        exemple.setPhraseOriginal(exDto.getPhraseOriginal());
+                        exemple.setPhraseTraduite(exDto.getPhraseTraduite());
+                        exemple.setTraduction(traduction);
                         exemples.add(exemple);
                     }
-
-                    traduction.setExemples(exemples);  // Ajoute les exemples à la traduction
+                    traduction.setExemples(exemples);
                 }
 
                 traductions.add(traduction);
             }
-
-            flashcard.setTraductions(traductions);  // Ajoute les traductions à la flashcard
+            flashcard.setTraductions(traductions);
         }
 
-        // 5. Sauvegarde TOUT en cascade (flashcard + traductions + exemples)
-        Flashcard savedFlashcard = flashcardRepository.save(flashcard);  // Cascade sauvegarde tout
-        return flashcardMapper.toDto(savedFlashcard);  // Renvoie la structure complète
+        Flashcard savedFlashcard = flashcardRepository.save(flashcard);
+        return flashcardMapper.toDto(savedFlashcard);
     }
 
     @Transactional
     public void deleteFlashcard(Long id) {
-        if (!flashcardRepository.existsById(id)) {  // Vérifie existence
-            throw new ResourceNotFoundException("Flashcard", "id", id);
+        Utilisateur currentUser = getCurrentUser();
+
+        // Vérifie que la flashcard existe
+        Flashcard flashcard = flashcardRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard", "id", id));
+
+        // SÉCURITÉ : vérifie que l'utilisateur est le propriétaire du deck parent
+        // Exception : les GESTIONNAIRE peuvent tout supprimer
+        if (!flashcard.getDeck().getUser().getId().equals(currentUser.getId())
+                && !currentUser.getRole().equals(Role.GESTIONNAIRE)) {
+            throw new IllegalArgumentException(
+                    "Vous n'êtes pas autorisé à supprimer cette flashcard"
+            );
         }
-        flashcardRepository.deleteById(id);  // CASCADE supprime aussi traductions et exemples
+
+        flashcardRepository.deleteById(id);
     }
 }
-
-// Service complexe : gère la création de structures imbriquées (Flashcard → Traduction → Exemple)
-// createFlashcard() crée TOUTE la structure en une seule transaction grâce à cascade = CascadeType.ALL
-// Structure : Flashcard ("Apple") → Traduction ("Pomme", FR) → Exemple ("I eat an apple" / "Je mange une pomme")
-// Une seule sauvegarde (flashcardRepository.save) déclenche l'insertion de tout grâce au cascade

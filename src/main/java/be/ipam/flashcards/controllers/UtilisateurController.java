@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,66 +26,61 @@ public class UtilisateurController {
         this.utilisateurService = utilisateurService;
     }
 
-    @Operation(summary = "Liste tous les utilisateurs")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès")
-    })
-    @GetMapping  // GET /api/utilisateurs - Liste tous les utilisateurs (SANS password)
+    @Operation(summary = "Liste tous les utilisateurs (GESTIONNAIRE uniquement)")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Seul l'admin peut voir tous les comptes
+    @GetMapping
     public ResponseEntity<List<UtilisateurDto>> getAllUtilisateurs() {
-        List<UtilisateurDto> utilisateurs = utilisateurService.getAllUtilisateurs();  // Renvoie UtilisateurDto (pas d'entité directe)
-        return ResponseEntity.ok(utilisateurs);  // DTO garantit que password n'est jamais exposé
+        return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 
-    @Operation(summary = "Récupère un utilisateur par ID")
+    @Operation(summary = "Récupère un utilisateur par ID (GESTIONNAIRE uniquement)")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Seul l'admin peut chercher un compte par ID
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Utilisateur trouvé"),
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/{id}")  // GET /api/utilisateurs/5 - Cherche par ID
+    @GetMapping("/{id}")
     public ResponseEntity<UtilisateurDto> getUtilisateurById(@PathVariable Long id) {
-        UtilisateurDto utilisateur = utilisateurService.getUtilisateurById(id);
-        return ResponseEntity.ok(utilisateur);  // 200 + utilisateur (email, nom, prenom, role...)
+        return ResponseEntity.ok(utilisateurService.getUtilisateurById(id));
     }
 
-    @Operation(summary = "Récupère un utilisateur par email")
+    @Operation(summary = "Récupère un utilisateur par email (GESTIONNAIRE uniquement)")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Seul l'admin peut chercher par email
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Utilisateur trouvé"),
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/par-email")  // GET /api/utilisateurs/par-email?email=test@test.com
-    public ResponseEntity<UtilisateurDto> getUtilisateurByEmail(@RequestParam String email) {  // @RequestParam récupère ?email=xxx
-        UtilisateurDto utilisateur = utilisateurService.getUtilisateurByEmail(email);  // Cherche par email unique
-        return ResponseEntity.ok(utilisateur);
+    @GetMapping("/par-email")
+    public ResponseEntity<UtilisateurDto> getUtilisateurByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(utilisateurService.getUtilisateurByEmail(email));
     }
 
-    @Operation(summary = "Met à jour un utilisateur")
+    @Operation(summary = "Met à jour un utilisateur (GESTIONNAIRE uniquement)")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Seul l'admin peut modifier un compte
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Utilisateur mis à jour"),
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PutMapping("/{id}")  // PUT /api/utilisateurs/5 - Modifie l'utilisateur 5
+    @PutMapping("/{id}")
     public ResponseEntity<UtilisateurDto> updateUtilisateur(
-            @PathVariable Long id,  // ID dans l'URL
-            @RequestBody UtilisateurDto utilisateurDto) {  // Nouvelles données en JSON
-        UtilisateurDto updated = utilisateurService.updateUtilisateur(id, utilisateurDto);  // Met à jour nom, prenom, etc.
-        return ResponseEntity.ok(updated);  // 200 + utilisateur modifié
+            @PathVariable Long id,
+            @RequestBody UtilisateurDto utilisateurDto) {
+        return ResponseEntity.ok(utilisateurService.updateUtilisateur(id, utilisateurDto));
     }
 
-    @Operation(summary = "Supprime un utilisateur")
+    @Operation(summary = "Supprime un utilisateur (GESTIONNAIRE uniquement)")
+    @PreAuthorize("hasRole('GESTIONNAIRE')")  // Seul l'admin peut supprimer un compte
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Utilisateur supprimé"),
             @ApiResponse(responseCode = "404", description = "Utilisateur non trouvé",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @DeleteMapping("/{id}")  // DELETE /api/utilisateurs/5 - Supprime l'utilisateur 5
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUtilisateur(@PathVariable Long id) {
-        utilisateurService.deleteUtilisateur(id);  // Supprime l'utilisateur (attention : ses decks, progressions aussi ?)
-        return ResponseEntity.noContent().build();  // 204 No Content
+        utilisateurService.deleteUtilisateur(id);
+        return ResponseEntity.noContent().build();
     }
 }
-
-// Important : UtilisateurDto ne contient JAMAIS le password (sécurité)
-// Le mapper Entity → DTO exclut automatiquement le password
