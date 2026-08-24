@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420" role="img" aria-labelledby="title desc">
+  <title id="title">Mauvais endroit</title>
+  <desc id="desc">Une illustration simple avec des panneaux indiquant backend et frontend.</desc>
+  <rect width="520" height="420" rx="32" fill="#eaf2ff"/>
+  <circle cx="402" cy="80" r="46" fill="#ffd166"/>
+  <path d="M90 324c34-76 84-114 151-114 86 0 122 58 188 118 24 22 12 54-20 54H105c-37 0-50-28-15-58Z" fill="#c7d2fe"/>
+  <path d="M156 150h214c12 0 22 10 22 22v38c0 12-10 22-22 22H156l-52-41 52-41Z" fill="#1d4ed8"/>
+  <path d="M148 80h192l52 41-52 41H148c-12 0-22-10-22-22v-38c0-12 10-22 22-22Z" fill="#14b8a6"/>
+  <text x="166" y="129" fill="#fff" font-family="Arial, sans-serif" font-size="28" font-weight="700">FRONTEND</text>
+  <text x="158" y="200" fill="#fff" font-family="Arial, sans-serif" font-size="28" font-weight="700">BACKEND</text>
+  <rect x="246" y="230" width="26" height="142" rx="10" fill="#475569"/>
+  <circle cx="259" cy="118" r="16" fill="#0f172a"/>
+  <path d="M232 285c0-38 22-66 57-66s57 28 57 66v16H232v-16Z" fill="#334155"/>
+  <circle cx="289" cy="186" r="36" fill="#f8c29a"/>
+  <path d="M250 178c4-28 22-45 54-45 32 0 51 22 52 52-29 3-57-3-84-21-7 8-14 12-22 14Z" fill="#0f172a"/>
+  <path d="M272 192c4 6 10 9 18 9s14-3 19-9" fill="none" stroke="#8a4b2a" stroke-width="5" stroke-linecap="round"/>
+  <path d="M236 356c11-35 31-53 60-53 30 0 50 18 61 53" fill="#1d4ed8"/>
+  <path d="M216 290c-25 6-42 21-51 45" fill="none" stroke="#334155" stroke-width="16" stroke-linecap="round"/>
+  <path d="M360 290c26 7 43 22 51 45" fill="none" stroke="#334155" stroke-width="16" stroke-linecap="round"/>
+  <path d="M169 335h66" stroke="#f8c29a" stroke-width="15" stroke-linecap="round"/>
+  <path d="M411 335h-66" stroke="#f8c29a" stroke-width="15" stroke-linecap="round"/>
+</svg>

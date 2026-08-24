@@ -1,0 +1,261 @@
+.admin-page {
+  min-height: 100vh;
+}
+
+.navbar {
+  color: white;
+  background: linear-gradient(135deg, #7f1d1d, var(--danger) 56%, var(--accent));
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.45rem;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    button {
+      background: rgba(255, 255, 255, 0.95);
+      color: #7f1d1d;
+      padding: 0.5rem 0.9rem;
+      cursor: pointer;
+      font-weight: 800;
+    }
+  }
+}
+
+.badge-role {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.btn-back {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.content {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1.5rem;
+  }
+}
+
+.form-card,
+.table-card {
+  background: var(--surface-card);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-card {
+  padding: 1.35rem;
+  margin-bottom: 1.5rem;
+
+  h3 {
+    color: var(--ink);
+    margin-top: 0;
+  }
+
+  small {
+    color: var(--muted);
+    display: block;
+    margin-top: 0.25rem;
+  }
+}
+
+.form-group {
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--ink);
+    font-weight: 800;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.78rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+
+    &:focus {
+      border-color: var(--danger);
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.table-card {
+  overflow: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      background: rgba(255, 241, 214, 0.72);
+      padding: 0.8rem 1rem;
+      color: var(--muted);
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tr:hover td {
+      background: rgba(255, 248, 232, 0.5);
+    }
+  }
+}
+
+.code-badge,
+.badge-count-attente {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.code-badge {
+  background: #e7f3f1;
+  color: var(--brand-strong);
+  padding: 0.18rem 0.6rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.badge-count-attente {
+  background: var(--accent-soft);
+  color: #8a4b05;
+  padding: 0.25rem 0.75rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-edit,
+.btn-delete,
+.btn-valider {
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--danger), #7f1d1d);
+  color: white;
+}
+
+.btn-secondary {
+  background: #edf0f2;
+  color: var(--ink);
+}
+
+.btn-edit {
+  background: var(--accent-soft);
+  color: #8a4b05;
+}
+
+.btn-delete {
+  background: #fff1f0;
+  color: var(--danger);
+}
+
+.btn-valider {
+  background: #dcfce7;
+  color: var(--success);
+}
+
+.success-message,
+.error-message {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.success-message {
+  background: #ecfdf3;
+  color: var(--success);
+}
+
+.error-message {
+  background: #fff1f0;
+  color: var(--danger);
+}
+
+.loading,
+.empty-state {
+  color: var(--muted);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.info-note {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 720px) {
+  .navbar,
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

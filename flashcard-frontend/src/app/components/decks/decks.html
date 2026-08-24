@@ -1,0 +1,145 @@
+<div class="decks-page">
+
+  <nav class="navbar">
+    <h1>FlashCard SRS</h1>
+    <div class="nav-right">
+      <!-- L'email vient du localStorage, rempli à la connexion -->
+      <span>{{ authService.getEmail() }}</span>
+
+      <!-- *ngIf n'affiche ce bouton que si la condition est vraie.
+           C'est ce qui fait apparaître l'accès à l'administration
+           pour un gestionnaire, et le masque pour tous les autres. -->
+      <button *ngIf="authService.getRole() === 'GESTIONNAIRE'"
+        class="btn-admin" (click)="goToAdmin()">
+        ⚙️ Administration
+      </button>
+      <button (click)="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- ===== MES DECKS ===== -->
+    <div class="header">
+      <h2>Mes Decks</h2>
+      <button class="btn-primary" (click)="openCreateForm()">+ Nouveau Deck</button>
+    </div>
+
+    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+    <!-- Un seul formulaire pour créer et pour modifier : c'est la
+         variable editingDeck qui change le titre et le bouton. -->
+    <div class="form-card" *ngIf="showForm">
+      <h3>{{ editingDeck ? 'Modifier le deck' : 'Nouveau deck' }}</h3>
+      <form (ngSubmit)="onSubmit()">
+
+        <!-- [(ngModel)] relie le champ à la variable dans les deux sens :
+             ce que l'utilisateur tape arrive directement dans formData. -->
+        <div class="form-group">
+          <label>Nom du deck</label>
+          <input type="text" [(ngModel)]="formData.name"
+            name="name" required placeholder="Ex: Vocabulaire TOEFL"/>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" [(ngModel)]="formData.description"
+            name="description" placeholder="Description du deck"/>
+        </div>
+
+        <div class="form-group">
+          <label>Type</label>
+          <select [(ngModel)]="formData.type" name="type">
+            <option value="PRIVEE">Privée (visible uniquement par moi)</option>
+            <option value="PUBLIQUE">Publique (à valider par un admin)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Langue étudiée</label>
+          <select [(ngModel)]="formData.langueId" name="langueId">
+            <option [value]="0" disabled>Choisir une langue</option>
+            <!-- La liste n'est pas écrite en dur : *ngFor crée une option
+                 par langue trouvée en base, chargée dans ngOnInit. -->
+            <option *ngFor="let langue of langues" [value]="langue.id">
+              {{ langue.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            {{ editingDeck ? 'Modifier' : 'Créer' }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="showForm = false">
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="decks-grid" *ngIf="!isLoading">
+
+      <div class="empty-state" *ngIf="decks.length === 0">
+        <p>Aucun deck. Créez-en un !</p>
+      </div>
+
+      <!-- *ngFor répète ce bloc pour chaque deck du tableau : s'il y en a
+           cinq, Angular fabrique cinq cartes. Aucune boucle à écrire. -->
+      <div class="deck-card" *ngFor="let deck of decks">
+        <div class="deck-info" (click)="openDeck(deck.id)">
+          <h3>{{ deck.name }}</h3>
+          <p>{{ deck.description }}</p>
+          <span class="badge-langue">{{ deck.langueNom }}</span>
+          <!-- [class.xxx] ajoute une classe CSS selon le type du deck,
+               ce qui donne au badge sa couleur et son libellé. -->
+          <span class="badge-type"
+            [class.badge-type-publique]="deck.type === 'PUBLIQUE'"
+            [class.badge-type-privee]="deck.type === 'PRIVEE'">
+            {{ deck.type === 'PUBLIQUE' ? '⏳ En attente de validation' : '🔒 Privée' }}
+          </span>
+          <!-- flashcardCount est calculé par le back end, pas ici -->
+          <span class="badge-count">{{ deck.flashcardCount }} carte(s)</span>
+        </div>
+        <div class="deck-actions">
+          <button class="btn-edit" (click)="openEditForm(deck)">✏️ Modifier</button>
+          <button class="btn-delete" (click)="deleteDeck(deck.id)">🗑️ Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deuxième liste, alimentée par un appel séparé : les decks
+         validés par un administrateur, communs à tous les utilisateurs. -->
+    <div class="section-officiels" *ngIf="!isLoading">
+      <div class="header-officiels">
+        <h2>📚 Decks Officiels</h2>
+        <p class="subtitle-officiels">Decks validés par nos administrateurs</p>
+      </div>
+
+      <div class="empty-state" *ngIf="decksOfficiels.length === 0">
+        <p>Aucun deck officiel disponible pour le moment.</p>
+      </div>
+
+      <div class="decks-grid">
+        <div class="deck-card deck-officiel" *ngFor="let deck of decksOfficiels">
+          <div class="deck-info" (click)="openDeck(deck.id)">
+            <h3>{{ deck.name }}</h3>
+            <p>{{ deck.description }}</p>
+            <span class="badge-langue">{{ deck.langueNom }}</span>
+            <span class="badge-officiel">✅ Officiel</span>
+            <span class="badge-count">{{ deck.flashcardCount }} carte(s)</span>
+          </div>
+          <!-- Ni modifier ni supprimer ici : un deck officiel ne
+               s'ouvre qu'en lecture pour les autres utilisateurs. -->
+          <div class="deck-actions">
+            <button class="btn-primary btn-small" (click)="openDeck(deck.id)">
+              📖 Ouvrir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

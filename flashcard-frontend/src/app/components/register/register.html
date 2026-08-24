@@ -1,0 +1,42 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h1>FlashCard SRS</h1>
+    <h2>Créer un compte</h2>
+
+    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
+
+    <!-- Les quatre champs correspondent exactement à ce qu'attend le
+         back end pour créer un compte (voir RegisterRequest). -->
+    <form (ngSubmit)="onRegister()">
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" [(ngModel)]="registerData.prenom"
+          name="prenom" placeholder="Votre prénom" required/>
+      </div>
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" [(ngModel)]="registerData.nom"
+          name="nom" placeholder="Votre nom" required/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="registerData.email"
+          name="email" placeholder="Votre email" required/>
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <!-- type="password" masque la saisie à l'écran. Le mot de passe
+             part en clair vers le back end, qui le chiffre avant de
+             l'enregistrer : rien n'est jamais stocké tel quel en base. -->
+        <input type="password" [(ngModel)]="registerData.password"
+          name="password" placeholder="Choisissez un mot de passe" required/>
+      </div>
+      <button type="submit" [disabled]="isLoading">
+        {{ isLoading ? 'Inscription...' : "S'inscrire" }}
+      </button>
+    </form>
+
+    <p>Déjà un compte ? <a routerLink="/login">Se connecter</a></p>
+  </div>
+</div>

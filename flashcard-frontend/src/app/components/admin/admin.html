@@ -1,0 +1,157 @@
+<!-- Page atteignable uniquement via adminGuard. Aucun test de rôle
+     n'est refait ici : si la page s'affiche, c'est que le guard a
+     déjà validé l'accès. -->
+<div class="admin-page">
+
+  <nav class="navbar">
+    <button class="btn-back" (click)="goBack()">← Mes Decks</button>
+    <h1>Administration</h1>
+    <div class="nav-right">
+      <span>{{ authService.getEmail() }}</span>
+      <span class="badge-role">GESTIONNAIRE</span>
+      <button (click)="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
+    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 1 : LANGUES                        -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section">
+      <div class="header">
+        <h2>Gestion des langues</h2>
+        <button class="btn-primary" (click)="openCreateLangueForm()">+ Nouvelle langue</button>
+      </div>
+
+      <!-- Même principe que pour les decks : un seul formulaire sert à
+           créer et à modifier, c'est editingLangue qui fait la bascule. -->
+      <div class="form-card" *ngIf="showLangueForm">
+        <h3>{{ editingLangue ? 'Modifier la langue' : 'Nouvelle langue' }}</h3>
+        <form (ngSubmit)="onSubmitLangue()">
+          <div class="form-group">
+            <label>Nom de la langue</label>
+            <input type="text" [(ngModel)]="langueFormData.nom"
+              name="nom" required placeholder="Ex: Français"/>
+          </div>
+          <div class="form-group">
+            <label>Code ISO</label>
+            <input type="text" [(ngModel)]="langueFormData.code"
+              name="code" required placeholder="Ex: fr" maxlength="5"/>
+            <small>Code ISO 639-1 : fr, en, es, de, it...</small>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">{{ editingLangue ? 'Modifier' : 'Créer' }}</button>
+            <button type="button" class="btn-secondary" (click)="showLangueForm = false">Annuler</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-card">
+        <div class="empty-state" *ngIf="langues.length === 0"><p>Aucune langue.</p></div>
+        <table *ngIf="langues.length > 0">
+          <thead>
+            <tr><th>ID</th><th>Nom</th><th>Code ISO</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let langue of langues">
+              <td>{{ langue.id }}</td>
+              <td><strong>{{ langue.nom }}</strong></td>
+              <td><span class="code-badge">{{ langue.code }}</span></td>
+              <td class="actions-cell">
+                <button class="btn-edit" (click)="openEditLangueForm(langue)">✏️ Modifier</button>
+                <button class="btn-delete" (click)="deleteLangue(langue.id)">🗑️ Supprimer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 2 : DECKS EN ATTENTE DE VALIDATION -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section">
+      <div class="header">
+        <h2>Decks en attente de validation</h2>
+        <!-- Le compteur se met à jour tout seul : il lit directement la
+             longueur du tableau, rechargé après chaque validation. -->
+        <span class="badge-count-attente" *ngIf="decksEnAttente.length > 0">
+          {{ decksEnAttente.length }} en attente
+        </span>
+      </div>
+
+      <div class="table-card">
+        <div class="empty-state" *ngIf="decksEnAttente.length === 0">
+          <p>✅ Aucun deck en attente de validation.</p>
+        </div>
+
+        <table *ngIf="decksEnAttente.length > 0">
+          <thead>
+            <tr>
+              <th>Nom du deck</th>
+              <th>Description</th>
+              <th>Langue</th>
+              <th>Créateur</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let deck of decksEnAttente">
+              <td><strong>{{ deck.name }}</strong></td>
+              <td>{{ deck.description }}</td>
+              <td><span class="code-badge">{{ deck.langueNom }}</span></td>
+              <td>{{ deck.userId }}</td>
+              <!-- Les deux issues possibles pour un deck soumis :
+                   validé, il devient OFFICIELLE et apparaît chez tous
+                   les utilisateurs ; rejeté, il repasse simplement en
+                   PRIVEE et son auteur le récupère intact. -->
+              <td class="actions-cell">
+                <button class="btn-valider" (click)="validerDeck(deck.id)">
+                  ✅ Valider
+                </button>
+                <button class="btn-delete" (click)="rejeterDeck(deck.id)">
+                  ❌ Rejeter
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 3 : UTILISATEURS                   -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section">
+      <div class="header">
+        <h2>Gestion des utilisateurs</h2>
+      </div>
+
+      <div class="table-card">
+        <div class="empty-state" *ngIf="utilisateurs.length === 0"><p>Aucun utilisateur.</p></div>
+        <table *ngIf="utilisateurs.length > 0">
+          <thead>
+            <tr><th>ID</th><th>Email</th><th>Nom</th><th>Prénom</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of utilisateurs">
+              <td>{{ user.id }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.nom }}</td>
+              <td>{{ user.prenom }}</td>
+              <td class="actions-cell">
+                <button class="btn-delete" (click)="deleteUtilisateur(user.id)">🗑️ Supprimer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="info-note">ℹ️ La modification du rôle (USER / GESTIONNAIRE) se fait directement en base de données.</p>
+      </div>
+    </div>
+
+  </div>
+</div>

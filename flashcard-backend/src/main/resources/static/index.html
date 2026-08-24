@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oups</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f8fb;
+      color: #182230;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px 18px;
+    }
+
+    main {
+      width: min(920px, 100%);
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(240px, 360px);
+      gap: 42px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2.2rem, 4.5vw, 4.4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      max-width: 580px;
+      color: #526071;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin-top: 26px;
+      padding: 0 18px;
+      border-radius: 8px;
+      background: #1d4ed8;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    img {
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        grid-template-columns: 1fr;
+        gap: 26px;
+        text-align: center;
+      }
+
+      p {
+        margin-inline: auto;
+      }
+
+      img {
+        margin-inline: auto;
+        max-width: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-labelledby="title">
+      <h1 id="title">Oups, tu n'es pas au bon endroit.</h1>
+      <p>Cette adresse correspond au backend de l'application. Pour utiliser le frontend, ouvre Angular sur le port 4200.</p>
+      <a href="http://localhost:4200/">Aller au frontend</a>
+    </section>
+    <img src="/assets/wrong-place.svg" alt="Illustration d'une personne devant deux panneaux de direction">
+  </main>
+</body>
+</html>

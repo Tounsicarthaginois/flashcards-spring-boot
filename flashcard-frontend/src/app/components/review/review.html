@@ -1,0 +1,80 @@
+<div class="review-page">
+
+  <nav class="navbar">
+    <button class="btn-back" (click)="goBack()">← Retour</button>
+    <h1>Session de révision</h1>
+    <span class="counter" *ngIf="!sessionFinished">
+      {{ remainingCards }} carte(s) restante(s)
+    </span>
+  </nav>
+
+  <div class="content">
+
+    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <!-- Écran de fin : s'affiche aussi quand il n'y avait rien à réviser -->
+    <div class="finished-card" *ngIf="sessionFinished">
+      <div class="finished-icon">🎉</div>
+      <h2>Session terminée !</h2>
+      <p>Tu as révisé toutes tes cartes du jour.</p>
+      <p>L'algorithme SRS a calculé quand revoir chaque carte.</p>
+      <button class="btn-primary" (click)="goBack()">Retour aux flashcards</button>
+    </div>
+
+    <!-- Carte de révision -->
+    <div class="review-card" *ngIf="!sessionFinished && progressions.length > 0">
+
+      <!-- La largeur de la barre est calculée directement à partir de
+           l'avancement : elle progresse à chaque carte validée. -->
+      <div class="progress-bar">
+        <div class="progress-fill"
+          [style.width.%]="(currentIndex / progressions.length) * 100">
+        </div>
+      </div>
+
+      <div class="card-section question-section">
+        <span class="section-label">Mot</span>
+        <p class="card-text">{{ progressions[currentIndex].question }}</p>
+      </div>
+
+      <!-- Le recto et le verso sont deux blocs distincts, jamais visibles
+           en même temps. Passer showAnswer à true suffit à "retourner"
+           la carte : il n'y a pas d'animation de rotation derrière. -->
+      <div class="reveal-section" *ngIf="!showAnswer">
+        <button class="btn-reveal" (click)="revealAnswer()">
+          Voir les traductions
+        </button>
+      </div>
+
+      <div *ngIf="showAnswer && currentFlashcard">
+        <div class="card-section answer-section">
+          <span class="section-label answer-label">Traductions</span>
+          <div *ngFor="let trad of currentFlashcard.traductions" class="trad-item">
+            <strong>{{ trad.texte }}</strong>
+            <span class="langue-badge">{{ trad.langueNom }}</span>
+            <div *ngFor="let ex of trad.exemples" class="exemple-item">
+              <p>{{ ex.phraseOriginal }}</p>
+              <p class="traduite">{{ ex.phraseTraduite }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ces deux boutons envoient true ou false au back end,
+             qui en déduit la date de la prochaine révision. -->
+        <div class="rating-section">
+          <p class="rating-label">Est-ce que tu connaissais ce mot ?</p>
+          <div class="rating-buttons">
+            <button class="btn-hard" (click)="submitResult(false)">
+              😓 Je ne savais pas
+              <span>Revoir demain</span>
+            </button>
+            <button class="btn-easy" (click)="submitResult(true)">
+              😄 Je savais !
+              <span>Revoir plus tard</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

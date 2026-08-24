@@ -1,65 +1,41 @@
-# Gradle
+# ===== Java / Gradle =====
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
+out/
 
-# IntelliJ IDEA
+# ===== Node / Angular =====
+node_modules/
+dist/
+.angular/
+*.tsbuildinfo
+
+# ===== IDE =====
 .idea/
 *.iml
 *.iws
 *.ipr
-out/
-
-# Eclipse
+.vscode/
 .classpath
 .project
 .settings/
 
-# Logs
-*.log
+# ===== Outils locaux =====
+.claude/
 
-# OS
+# ===== Logs =====
+*.log
+npm-debug.log*
+ng-serve.out.log
+ng-serve.err.log
+errors.txt
+
+# ===== OS =====
 .DS_Store
 Thumbs.db
 
-# Fichiers temporaires
+# ===== Fichiers temporaires =====
 *.tmp
 *.bak
 *.swp
 *~
-```
-
-5. **Sauvegardez** (Ctrl+S)
-
----
-
-### **2. Activer Git dans IntelliJ**
-
-1. Menu **VCS** (en haut) → **Enable Version Control Integration...**
-2. Sélectionnez **Git**
-3. Cliquez sur **OK**
-
----
-
-### **3. Ajouter tous les fichiers**
-
-1. Menu **Git** → **Add**
-2. Ou cliquez sur **"Add"** si une popup apparaît
-
----
-
-### **4. Faire le premier commit**
-
-1. **Ctrl+K** (raccourci pour commit)
-2. Ou menu **Git** → **Commit...**
-
-Dans la fenêtre de commit :
-- **Cochez tous les fichiers** dans la liste
-- **Commit message** : 
-```
-Initial commit - Application flashcards Spring Boot
-
-- CRUD complet pour utilisateurs
-- API REST fonctionnelle  
-- Connexion PostgreSQL
-- Tests Postman validés

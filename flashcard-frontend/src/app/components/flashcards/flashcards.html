@@ -1,0 +1,168 @@
+<div class="flashcards-page">
+
+  <nav class="navbar">
+    <button class="btn-back" (click)="goBack()">← Mes Decks</button>
+    <h1>
+      {{ deckInfo ? deckInfo.name : 'FlashCard SRS' }}
+      <span class="badge-officiel-nav" *ngIf="isOfficiel">✅ Officiel</span>
+    </h1>
+    <button class="btn-review" (click)="startReview()">▶ Réviser</button>
+  </nav>
+
+  <div class="content">
+
+    <div class="header">
+      <h2>
+        Flashcards
+        <span class="badge-readonly" *ngIf="isOfficiel && !canEdit">🔒 Lecture seule</span>
+      </h2>
+      <!-- canEdit est un getter du composant : il compare l'utilisateur
+           connecté au créateur du deck. Toute la gestion des droits
+           d'affichage tient dans cette seule variable, réutilisée
+           partout dans le fichier. -->
+      <button class="btn-primary" (click)="openCreateForm()" *ngIf="canEdit">
+        + Nouvelle carte
+      </button>
+    </div>
+
+    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <div class="form-card" *ngIf="showForm && canEdit">
+      <h3>Nouvelle flashcard</h3>
+      <form (ngSubmit)="onSubmit()">
+
+        <div class="form-group">
+          <label>Mot / Question</label>
+          <input type="text" [(ngModel)]="formData.question"
+            name="question" required placeholder="Ex: Hello"/>
+        </div>
+
+        <div class="traductions-section">
+          <h4>Traductions (réponses)</h4>
+
+          <!-- Le formulaire se construit à partir du tableau traductions.
+               Cliquer sur "Ajouter une traduction" ne dessine rien : la
+               méthode ajoute juste une case au tableau, et ce *ngFor fait
+               apparaître le bloc de champs correspondant.
+               "let i = index" donne le numéro de la ligne, nécessaire
+               pour donner un nom unique à chaque champ (voir [name]). -->
+          <div class="traduction-block"
+            *ngFor="let trad of formData.traductions; let i = index">
+            <div class="traduction-header">
+              <span>Traduction {{ i + 1 }}</span>
+              <!-- La croix disparaît s'il ne reste qu'une traduction :
+                   une flashcard sans aucune réponse n'aurait pas de sens. -->
+              <button type="button" class="btn-remove"
+                *ngIf="formData.traductions.length > 1"
+                (click)="removeTraduction(i)">✕</button>
+            </div>
+
+            <!-- [name] est calculé au lieu d'être écrit en dur : comme ce
+                 bloc est répété, on obtient texte0, texte1, texte2...
+                 Sans ça, tous les champs porteraient le même nom et le
+                 formulaire ne saurait plus les distinguer. -->
+            <div class="form-group">
+              <label>Texte traduit</label>
+              <input type="text" [(ngModel)]="trad.texte"
+                [name]="'texte' + i" required placeholder="Ex: Bonjour"/>
+            </div>
+
+            <div class="form-group">
+              <label>Langue</label>
+              <select [(ngModel)]="trad.langueId" [name]="'langueId' + i">
+                <option [value]="0" disabled>Choisir une langue</option>
+                <option *ngFor="let langue of langues" [value]="langue.id">
+                  {{ langue.nom }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Deuxième niveau d'imbrication : chaque traduction porte
+                 sa propre liste d'exemples. D'où la structure à trois
+                 étages flashcard → traductions → exemples. -->
+            <div class="exemples-section">
+              <h5>Exemples</h5>
+              <div class="exemple-block"
+                *ngFor="let ex of trad.exemples; let j = index">
+                <div class="form-group">
+                  <label>Phrase originale</label>
+                  <input type="text" [(ngModel)]="ex.phraseOriginal"
+                    [name]="'phraseOrig' + i + j"
+                    placeholder="Ex: Hello, how are you?"/>
+                </div>
+                <div class="form-group">
+                  <label>Phrase traduite</label>
+                  <input type="text" [(ngModel)]="ex.phraseTraduite"
+                    [name]="'phraseTrad' + i + j"
+                    placeholder="Ex: Bonjour, comment vas-tu?"/>
+                </div>
+                <button type="button" class="btn-remove"
+                  (click)="removeExemple(trad, j)">
+                  Supprimer exemple
+                </button>
+              </div>
+              <button type="button" class="btn-secondary"
+                (click)="addExemple(trad)">
+                + Ajouter un exemple
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-secondary" (click)="addTraduction()">
+            + Ajouter une traduction
+          </button>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Créer</button>
+          <button type="button" class="btn-secondary"
+            (click)="showForm = false">Annuler</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="cards-list">
+
+      <!-- Message adapté selon les droits : on ne propose pas de créer
+           une carte à quelqu'un qui n'en a pas le droit. -->
+      <div class="empty-state" *ngIf="flashcards.length === 0 && !isLoading">
+        <p *ngIf="canEdit">Aucune flashcard. Créez-en une !</p>
+        <p *ngIf="!canEdit">Ce deck ne contient pas encore de flashcards.</p>
+      </div>
+
+      <div class="flashcard-item" *ngFor="let card of flashcards">
+        <div class="card-content">
+
+          <div class="card-question">
+            <span class="label">MOT</span>
+            <p>{{ card.question }}</p>
+          </div>
+
+          <div class="card-traductions">
+            <span class="label">TRADUCTIONS</span>
+            <div *ngFor="let trad of card.traductions" class="traduction-item">
+              <strong>{{ trad.texte }}</strong>
+              <span class="langue-badge">{{ trad.langueNom }}</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="card-footer">
+
+          <!-- getSrsBadge() renvoie à la fois le texte et la classe CSS,
+               ce qui donne au badge sa couleur en même temps que son
+               libellé. C'est ici que l'état des révisions devient visible. -->
+          <span class="badge-srs {{ getSrsBadge(card.id!).classe }}">
+            {{ getSrsBadge(card.id!).label }}
+          </span>
+
+          <button class="btn-delete" *ngIf="canEdit"
+            (click)="deleteFlashcard(card.id!)">🗑️ Supprimer</button>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

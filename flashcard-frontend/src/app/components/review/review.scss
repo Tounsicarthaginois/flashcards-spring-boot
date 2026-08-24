@@ -1,0 +1,238 @@
+.review-page {
+  min-height: 100vh;
+}
+
+.navbar {
+  color: white;
+  background: linear-gradient(135deg, var(--brand), #1f7a68 60%, var(--accent));
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    letter-spacing: 0;
+  }
+
+  .btn-back {
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .counter {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+}
+
+.content {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0;
+}
+
+.review-card,
+.finished-card {
+  background: var(--surface-card);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(31, 41, 51, 0.12);
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand), var(--accent));
+    transition: width 0.3s ease;
+  }
+}
+
+.card-section {
+  padding: 2rem;
+
+  .section-label {
+    display: block;
+    margin-bottom: 1rem;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .answer-label {
+    color: var(--brand);
+  }
+
+  .card-text {
+    margin: 0;
+    color: var(--ink);
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 0;
+  }
+}
+
+.question-section,
+.answer-section {
+  border-bottom: 1px solid var(--line);
+}
+
+.trad-item {
+  margin-bottom: 1rem;
+
+  strong {
+    color: var(--ink);
+    font-size: 1.15rem;
+  }
+
+  .langue-badge {
+    margin-left: 0.5rem;
+    background: #e7f3f1;
+    color: var(--brand-strong);
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+}
+
+.exemple-item {
+  margin-top: 0.6rem;
+  padding-left: 1rem;
+  border-left: 4px solid rgba(217, 119, 6, 0.32);
+
+  p {
+    margin: 0.2rem 0;
+    color: var(--muted);
+  }
+
+  .traduite {
+    color: #8a4b05;
+    font-style: italic;
+  }
+}
+
+.reveal-section {
+  padding: 2rem;
+  text-align: center;
+
+  .btn-reveal {
+    background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+    color: white;
+    padding: 1rem 2.2rem;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 900;
+    box-shadow: 0 14px 28px rgba(20, 108, 99, 0.22);
+  }
+}
+
+.rating-section {
+  padding: 1.5rem 2rem 2rem;
+
+  .rating-label {
+    margin-bottom: 1rem;
+    color: var(--muted);
+    text-align: center;
+    font-weight: 800;
+  }
+
+  .rating-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+.btn-hard,
+.btn-easy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 900;
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+}
+
+.btn-hard {
+  background: #fff1f0;
+  color: var(--danger);
+}
+
+.btn-easy {
+  background: #dcfce7;
+  color: var(--success);
+}
+
+.finished-card {
+  padding: 3rem;
+  text-align: center;
+
+  .finished-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    color: var(--ink);
+  }
+
+  p {
+    color: var(--muted);
+  }
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 900;
+  margin-top: 1rem;
+}
+
+.error-message {
+  background: #fff1f0;
+  color: var(--danger);
+  padding: 0.75rem;
+}
+
+.loading {
+  color: var(--muted);
+  padding: 3rem;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rating-section .rating-buttons {
+    grid-template-columns: 1fr;
+  }
+}
